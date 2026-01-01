@@ -1,0 +1,146 @@
+package com.eygraber.vice.module.generator.lib
+
+import com.eygraber.vice.module.generator.lib.internal.addModuleToNavDependencies
+import com.eygraber.vice.module.generator.lib.internal.addModuleToSettings
+import com.eygraber.vice.module.generator.lib.internal.addToNav
+import com.eygraber.vice.module.generator.lib.internal.createScreensModule
+import java.io.File
+
+/**
+ * Configuration for generating a screen module.
+ */
+public data class ModuleGeneratorConfig(
+  val projectDir: File,
+  val moduleName: String,
+  val packageName: String,
+  val featureName: String,
+  val projectPackagePrefix: String,
+  val shouldIncludeEffects: Boolean = false,
+  val shouldGeneratePreview: Boolean = true,
+  val shouldGeneratePreviewParameterProvider: Boolean = true,
+)
+
+/**
+ * Result of module generation.
+ */
+public sealed interface GenerationResult {
+  public data object Success : GenerationResult
+  public data class Failure(val message: String, val cause: Throwable? = null) : GenerationResult
+}
+
+/**
+ * Core module generator that can be invoked programmatically.
+ */
+public class ModuleGenerator {
+  /**
+   * Generates a new screen module with the given configuration.
+   */
+  public fun generate(config: ModuleGeneratorConfig): GenerationResult = try {
+    createScreensModule(
+      projectDir = config.projectDir,
+      moduleName = config.moduleName,
+      packageName = config.packageName,
+      featureName = config.featureName,
+      projectPackagePrefix = config.projectPackagePrefix,
+      shouldIncludeEffects = config.shouldIncludeEffects,
+      shouldGeneratePreview = config.shouldGeneratePreview,
+      shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
+    )
+
+    addModuleToSettings(
+      projectDir = config.projectDir,
+      moduleName = config.moduleName,
+    )
+
+    addModuleToNavDependencies(
+      projectDir = config.projectDir,
+      moduleName = config.moduleName,
+    )
+
+    addToNav(
+      projectDir = config.projectDir,
+      featurePackage = config.packageName,
+      featureName = config.featureName,
+      projectPackagePrefix = config.projectPackagePrefix,
+    )
+
+    GenerationResult.Success
+  }
+  catch(e: Exception) {
+    GenerationResult.Failure("Failed to generate module: ${e.message}", e)
+  }
+
+  /**
+   * Validates the given configuration without generating files.
+   */
+  public fun validate(config: ModuleGeneratorConfig): ValidationResult {
+    val errors = mutableListOf<String>()
+
+    if(!config.projectDir.exists() || !config.projectDir.isDirectory) {
+      errors.add("Project directory does not exist or is not a directory")
+    }
+
+    if(!config.moduleName.matches(ModuleNameRegex)) {
+      errors.add(
+        """
+        Module name is invalid:
+          • must begin and end with a lowercase character
+          • can't have consecutive '-'
+          • can only contain lowercase characters and '-'
+        """.trimIndent(),
+      )
+    }
+
+    if(!config.packageName.matches(PackageNameRegex)) {
+      errors.add(
+        """
+        Package name is invalid:
+          • must begin with a lowercase character
+          • can only contain lowercase characters, digits, '.', and '_'
+          • can't have consecutive '.'
+          • can't end with a '.'
+        """.trimIndent(),
+      )
+    }
+
+    if(!config.featureName.matches(FeatureNameRegex)) {
+      errors.add(
+        """
+        Feature name is invalid:
+          • must begin with an uppercase character
+          • can only contain characters or digits
+        """.trimIndent(),
+      )
+    }
+
+    return if(errors.isEmpty()) {
+      ValidationResult.Valid
+    }
+    else {
+      ValidationResult.Invalid(errors)
+    }
+  }
+
+  /**
+   * Checks if a module already exists at the given location.
+   */
+  public fun moduleExists(projectDir: File, moduleName: String): Boolean {
+    val screensDir = File(projectDir, "screens")
+    val moduleDir = File(screensDir, moduleName)
+    return moduleDir.exists() && moduleDir.isDirectory
+  }
+
+  public companion object {
+    private val ModuleNameRegex = Regex("^([a-z]+(-))*[a-z]+(?::([a-z]+(-))*[a-z]+)*\$")
+    private val PackageNameRegex = Regex("^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*[a-z0-9_]*\$")
+    private val FeatureNameRegex = Regex("[A-Z][A-Za-z0-9]*")
+  }
+}
+
+/**
+ * Result of configuration validation.
+ */
+public sealed interface ValidationResult {
+  public data object Valid : ValidationResult
+  public data class Invalid(val errors: List<String>) : ValidationResult
+}
