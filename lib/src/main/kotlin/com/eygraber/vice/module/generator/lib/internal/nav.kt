@@ -4,22 +4,21 @@ import java.io.File
 
 internal fun addToNav(
   projectDir: File,
+  projectName: String,
   featurePackage: String,
   featureName: String,
-  projectPackagePrefix: String,
+  projectPackage: String,
 ): Boolean {
   val featureCall = featureName.replaceFirstChar(Char::lowercase)
   val component = "${featureName}Component"
   val navigator = "${featureName}Navigator"
   val key = "${featureName}Key"
 
-  val navPackagePath = projectPackagePrefix.replace(".", "/")
+  val projectPackagePath = projectPackage.replace(".", "/")
   val navigatorsFile =
     File(
       projectDir,
-      "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
-        ".",
-      ).last().replaceFirstChar(Char::uppercase)}Navigators.kt",
+      "nav/src/main/kotlin/$projectPackagePath/nav/${projectName}Navigators.kt",
     )
 
   navigatorsFile.insert(
@@ -46,9 +45,7 @@ internal fun addToNav(
   val navigatorsTestFile =
     File(
       projectDir,
-      "nav/src/test/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
-        ".",
-      ).last().replaceFirstChar(Char::uppercase)}NavigatorsTest.kt",
+      "nav/src/test/kotlin/$projectPackagePath/nav/${projectName}NavigatorsTest.kt",
     )
 
   navigatorsTestFile.insert(
@@ -65,9 +62,7 @@ internal fun addToNav(
     |      push($key)
     |    }
     |
-    |    val navigator = ${projectPackagePrefix.split(
-      ".",
-    ).last().replaceFirstChar(Char::uppercase)}Navigators.$featureCall(backStack)
+    |    val navigator = ${projectName}Navigators.$featureCall(backStack)
     |
     |    navigator.navigateBack()
     |    backStack shouldContainExactly listOf(RootKey)
@@ -84,9 +79,7 @@ internal fun addToNav(
   val navFile =
     File(
       projectDir,
-      "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
-        ".",
-      ).last().replaceFirstChar(Char::uppercase)}Nav.kt",
+      "nav/src/main/kotlin/$projectPackagePath/nav/${projectName}Nav.kt",
     )
 
   navFile.insert(
@@ -99,8 +92,8 @@ internal fun addToNav(
     intoAlphabetizedSectionWithPrefix = "import ",
   )
 
-  val navComponentName = "${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}NavComponent"
-  val navigatorsName = "${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}Navigators"
+  val navComponentName = "${projectName}NavComponent"
+  val navigatorsName = "${projectName}Navigators"
 
   val factoryExtension =
     """

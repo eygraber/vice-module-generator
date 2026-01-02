@@ -4,10 +4,11 @@ import java.io.File
 
 internal fun createScreensModule(
   projectDir: File,
+  projectName: String,
   moduleName: String,
   packageName: String,
   featureName: String,
-  projectPackagePrefix: String,
+  projectPackage: String,
   shouldIncludeEffects: Boolean,
   shouldGeneratePreview: Boolean,
   shouldGeneratePreviewParameterProvider: Boolean,
@@ -106,7 +107,6 @@ internal fun createScreensModule(
   val viewStateName = "${featureName}ViewState"
   val viewStatePreviewProviderName = "${viewStateName}PreviewProvider"
 
-  val projectName = projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)
   val effectsImports = when {
     shouldIncludeEffects -> emptyArray()
     else -> arrayOf("com.eygraber.vice.ViceEffects")
@@ -115,8 +115,8 @@ internal fun createScreensModule(
   val imports = listOf(
     *effectsImports,
     "androidx.navigation3.runtime.NavKey",
-    "com.eygraber.vice.di.scopes.NavScope",
-    "com.eygraber.vice.di.scopes.ScreenScope",
+    "$projectPackage.di.scopes.NavScope",
+    "$projectPackage.di.scopes.ScreenScope",
     "com.eygraber.vice.nav3.ViceNavEntryProvider",
     "kotlinx.serialization.Serializable",
     "me.tatarka.inject.annotations.Inject",
@@ -285,12 +285,12 @@ internal fun createScreensModule(
           shouldGeneratePreviewParameterProvider ->
             arrayOf(
               "androidx.compose.ui.tooling.preview.PreviewParameter",
-              "$projectPackagePrefix.vice.ui.compose.NamedPreviewParameter",
-              "$projectPackagePrefix.vice.ui.compose.Preview${projectName}Screen",
+              "$projectPackage.ui.compose.NamedPreviewParameter",
+              "$projectPackage.ui.compose.Preview${projectName}Screen",
             )
 
           else -> arrayOf(
-            "$projectPackagePrefix.vice.ui.compose.Preview${projectName}Screen",
+            "$projectPackage.ui.compose.Preview${projectName}Screen",
           )
         }
 
@@ -340,7 +340,7 @@ internal fun createScreensModule(
 
       val themeImport = when {
         shouldGeneratePreview || shouldGeneratePreviewParameterProvider ->
-          "$projectPackagePrefix.vice.ui.material.theme.${projectName}PreviewTheme"
+          "$projectPackage.ui.material.theme.${projectName}PreviewTheme"
 
         else -> null
       }
@@ -354,7 +354,7 @@ internal fun createScreensModule(
           "androidx.compose.material3.Text",
           "androidx.compose.runtime.Composable",
           "androidx.compose.ui.Modifier",
-          "$projectPackagePrefix.vice.ui.material.theme.${projectName}Theme",
+          "$projectPackage.ui.material.theme.${projectName}Theme",
           "com.eygraber.vice.ViceView",
           themeImport,
           *previewImports,
@@ -422,7 +422,7 @@ internal fun createScreensModule(
           |
           |package $packageName
           |
-          |import $projectPackagePrefix.vice.ui.compose.NamedPreviewParameterProvider
+          |import $projectPackage.ui.compose.NamedPreviewParameterProvider
           |
           |internal class $viewStatePreviewProviderName : NamedPreviewParameterProvider<$viewStateName>() {
           |  override val values = sequenceOf(
@@ -440,19 +440,27 @@ internal fun createScreensModule(
 
   File(testPackageDir, "${featureName}ScreenshotTest.kt").apply {
     if(!exists()) {
+      val screenshotTestImports =
+        listOf(
+          "app.cash.paparazzi.Paparazzi",
+          "$projectPackage.test.utils.PaparazziDeviceConfig",
+          "$projectPackage.ui.material.theme.${projectName}EdgeToEdgePreviewTheme",
+          "com.google.testing.junit.testparameterinjector.TestParameter",
+          "com.google.testing.junit.testparameterinjector.TestParameterInjector",
+          "org.junit.Rule",
+          "org.junit.Test",
+          "org.junit.runner.RunWith",
+        ).sorted()
+          .joinToString(separator = "\n") {
+            "import $it"
+          }
+
       createNewFile()
       writeText(
         """
         |package $packageName
         |
-        |import app.cash.paparazzi.Paparazzi
-        |import $projectPackagePrefix.vice.test.utils.PaparazziDeviceConfig
-        |import $projectPackagePrefix.vice.ui.material.theme.${projectName}EdgeToEdgePreviewTheme
-        |import com.google.testing.junit.testparameterinjector.TestParameter
-        |import com.google.testing.junit.testparameterinjector.TestParameterInjector
-        |import org.junit.Rule
-        |import org.junit.Test
-        |import org.junit.runner.RunWith
+        |$screenshotTestImports
         |
         |@RunWith(TestParameterInjector::class)
         |class ${featureName}ScreenshotTest(

@@ -241,7 +241,7 @@ formatting-eygraber:
 naming:
   active: true
   BooleanPropertyNaming:
-    allowedPattern: '(^((is|can|has|needs|does|are|was|asBoolean|should|DEBUG|ret)|.*Has.*|.*Needs.*)|.*Matches$|.*Exists$)'
+    allowedPattern: '(^((is|can|has|needs|does|are|was|asBoolean|should|DEBUG|ret|result)|.*Has.*|.*Needs.*)|.*Matches$|.*Exists$)'
     active: true
   ClassNaming:
     active: true

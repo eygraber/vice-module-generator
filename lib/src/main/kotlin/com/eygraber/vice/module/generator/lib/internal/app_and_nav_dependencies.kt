@@ -2,7 +2,7 @@ package com.eygraber.vice.module.generator.lib.internal
 
 import java.io.File
 
-internal fun addModuleToNavDependencies(
+internal fun addModuleToAppAndNavDependencies(
   projectDir: File,
   moduleName: String,
 ): Boolean {

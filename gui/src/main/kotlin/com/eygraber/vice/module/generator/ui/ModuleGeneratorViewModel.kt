@@ -21,7 +21,8 @@ private val PackageNameRegex = Regex("^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*[a-z0-9_]*
 private val FeatureNameRegex = Regex("[A-Z][A-Za-z0-9]*")
 
 internal class ModuleGeneratorViewModel(
-  packageNamePrefix: String,
+  private val projectName: String,
+  private val projectPackage: String,
 ) {
   private val projectDir = File(".")
 
@@ -29,10 +30,7 @@ internal class ModuleGeneratorViewModel(
 
   val isProjectDirValid = projectDir.exists() || File(projectDir, "settings.gradle.kts").exists()
 
-  private val packageNamePrefix = when {
-    packageNamePrefix.isBlank() -> ""
-    else -> "$packageNamePrefix."
-  }
+  private val packageNamePrefix = "$projectPackage."
 
   var shouldGenerateViceEffects by mutableStateOf(false)
   var shouldInferModuleName by mutableStateOf(true)
@@ -185,12 +183,14 @@ internal class ModuleGeneratorViewModel(
     GlobalScope.launch(Dispatchers.IO) {
       progressText = "Generating Files"
 
+      val featurePackage = if(shouldInferPackageName) null else packageName
+
       val config = ModuleGeneratorConfig(
         projectDir = projectDir,
-        moduleName = moduleName,
-        packageName = packageName,
+        projectName = projectName,
+        projectPackage = projectPackage,
         featureName = featureName,
-        projectPackagePrefix = packageNamePrefix.trimEnd('.'),
+        featurePackage = featurePackage,
         shouldIncludeEffects = shouldGenerateViceEffects,
         shouldGeneratePreview = shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProviderInternal,
@@ -208,19 +208,18 @@ internal class ModuleGeneratorViewModel(
         return@launch
       }
 
-      val projectRoot = projectDir
-      val gradleTask = ":screens:$moduleName:recordPaparazziDevDebug"
-
-      progressText = "Running ./gradlew $gradleTask"
-
-      ProcessBuilder(
-        File(projectRoot, "gradlew").absolutePath,
-        "-p",
-        projectRoot.absolutePath,
-        gradleTask,
-      ).inheritIO()
-        .start()
-        .waitFor()
+      runCatching {
+        generator.recordScreenshots(
+          onTaskAboutToRun = { gradleTask ->
+            progressText = "Running ./gradlew $gradleTask"
+          },
+          config = config,
+          recordTask = "recordPaparazziDevDebug",
+        )
+      }.getOrElse { error ->
+        progressText = "Generation failed: ${error.message}"
+        return@launch
+      }
 
       exitProcess(0)
     }

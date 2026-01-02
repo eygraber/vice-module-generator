@@ -1,6 +1,6 @@
 package com.eygraber.vice.module.generator.lib
 
-import com.eygraber.vice.module.generator.lib.internal.addModuleToNavDependencies
+import com.eygraber.vice.module.generator.lib.internal.addModuleToAppAndNavDependencies
 import com.eygraber.vice.module.generator.lib.internal.addModuleToSettings
 import com.eygraber.vice.module.generator.lib.internal.addToNav
 import com.eygraber.vice.module.generator.lib.internal.createScreensModule
@@ -11,10 +11,10 @@ import java.io.File
  */
 public data class ModuleGeneratorConfig(
   val projectDir: File,
-  val moduleName: String,
-  val packageName: String,
+  val projectName: String,
+  val projectPackage: String,
   val featureName: String,
-  val projectPackagePrefix: String,
+  val featurePackage: String? = null,
   val shouldIncludeEffects: Boolean = false,
   val shouldGeneratePreview: Boolean = true,
   val shouldGeneratePreviewParameterProvider: Boolean = true,
@@ -36,12 +36,18 @@ public class ModuleGenerator {
    * Generates a new screen module with the given configuration.
    */
   public fun generate(config: ModuleGeneratorConfig): GenerationResult = try {
+    // Compute derived values
+    val moduleName = NameInference.inferModuleName(config.featureName)
+    val packageName = config.featurePackage
+      ?: "${config.projectPackage}.${NameInference.inferPackageName(config.featureName)}"
+
     createScreensModule(
       projectDir = config.projectDir,
-      moduleName = config.moduleName,
-      packageName = config.packageName,
+      projectName = config.projectName,
+      moduleName = moduleName,
+      packageName = packageName,
       featureName = config.featureName,
-      projectPackagePrefix = config.projectPackagePrefix,
+      projectPackage = config.projectPackage,
       shouldIncludeEffects = config.shouldIncludeEffects,
       shouldGeneratePreview = config.shouldGeneratePreview,
       shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
@@ -49,25 +55,50 @@ public class ModuleGenerator {
 
     addModuleToSettings(
       projectDir = config.projectDir,
-      moduleName = config.moduleName,
+      moduleName = moduleName,
     )
 
-    addModuleToNavDependencies(
+    addModuleToAppAndNavDependencies(
       projectDir = config.projectDir,
-      moduleName = config.moduleName,
+      moduleName = moduleName,
     )
 
     addToNav(
       projectDir = config.projectDir,
-      featurePackage = config.packageName,
+      projectName = config.projectName,
+      featurePackage = packageName,
       featureName = config.featureName,
-      projectPackagePrefix = config.projectPackagePrefix,
+      projectPackage = config.projectPackage,
     )
 
     GenerationResult.Success
   }
   catch(e: Exception) {
     GenerationResult.Failure("Failed to generate module: ${e.message}", e)
+  }
+
+  /**
+   * Runs the Gradle task to record screenshots for the given module configuration.
+   */
+  public fun recordScreenshots(
+    onTaskAboutToRun: (String) -> Unit,
+    config: ModuleGeneratorConfig,
+    recordTask: String,
+  ) {
+    val projectRoot = config.projectDir
+    val inferredModuleName = NameInference.inferModuleName(config.featureName)
+    val gradleTask = ":screens:$inferredModuleName:$recordTask"
+
+    onTaskAboutToRun(gradleTask)
+
+    ProcessBuilder(
+      File(projectRoot, "gradlew").absolutePath,
+      "-p",
+      projectRoot.absolutePath,
+      gradleTask,
+    ).inheritIO()
+      .start()
+      .waitFor()
   }
 
   /**
@@ -80,36 +111,51 @@ public class ModuleGenerator {
       errors.add("Project directory does not exist or is not a directory")
     }
 
-    if(!config.moduleName.matches(ModuleNameRegex)) {
+    val moduleName = NameInference.inferModuleName(config.featureName)
+    if(!moduleName.matches(ModuleNameRegex)) {
       errors.add(
         """
-        Module name is invalid:
-          • must begin and end with a lowercase character
-          • can't have consecutive '-'
-          • can only contain lowercase characters and '-'
-        """.trimIndent(),
+        |Module name is invalid:
+        |  • must begin and end with a lowercase character
+        |  • can't have consecutive '-'
+        |  • can only contain lowercase characters and '-'
+        """.trimMargin(),
       )
     }
 
-    if(!config.packageName.matches(PackageNameRegex)) {
+    val packageName = config.featurePackage
+      ?: "${config.projectPackage}.${NameInference.inferPackageName(config.featureName)}"
+    if(!packageName.matches(PackageNameRegex)) {
       errors.add(
         """
-        Package name is invalid:
-          • must begin with a lowercase character
-          • can only contain lowercase characters, digits, '.', and '_'
-          • can't have consecutive '.'
-          • can't end with a '.'
-        """.trimIndent(),
+        |Package name is invalid:
+        |  • must begin with a lowercase character
+        |  • can only contain lowercase characters, digits, '.', and '_'
+        |  • can't have consecutive '.'
+        |  • can't end with a '.'
+        """.trimMargin(),
+      )
+    }
+
+    if(!config.projectPackage.matches(PackageNameRegex)) {
+      errors.add(
+        """
+        |Project package is invalid:
+        |  • must begin with a lowercase character
+        |  • can only contain lowercase characters, digits, '.', and '_'
+        |  • can't have consecutive '.'
+        |  • can't end with a '.'
+        """.trimMargin(),
       )
     }
 
     if(!config.featureName.matches(FeatureNameRegex)) {
       errors.add(
         """
-        Feature name is invalid:
-          • must begin with an uppercase character
-          • can only contain characters or digits
-        """.trimIndent(),
+        |Feature name is invalid:
+        |  • must begin with an uppercase character
+        |  • can only contain characters or digits
+        """.trimMargin(),
       )
     }
 

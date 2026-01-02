@@ -1,9 +1,9 @@
 package com.example.test
 
 import androidx.navigation3.runtime.NavKey
+import com.example.di.scopes.NavScope
+import com.example.di.scopes.ScreenScope
 import com.eygraber.vice.ViceEffects
-import com.eygraber.vice.di.scopes.NavScope
-import com.eygraber.vice.di.scopes.ScreenScope
 import com.eygraber.vice.nav3.ViceNavEntryProvider
 import kotlinx.serialization.Serializable
 import me.tatarka.inject.annotations.Inject
