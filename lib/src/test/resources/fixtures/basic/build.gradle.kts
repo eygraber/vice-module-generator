@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-  namespace = "com.example.test"
+  namespace = "com.example.screens.test"
 }
 
 dependencies {

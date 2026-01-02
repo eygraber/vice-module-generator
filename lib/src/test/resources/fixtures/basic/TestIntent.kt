@@ -1,3 +1,3 @@
-package com.example.test
+package com.example.screens.test
 
 sealed interface TestIntent

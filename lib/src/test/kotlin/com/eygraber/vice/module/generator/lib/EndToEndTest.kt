@@ -198,7 +198,7 @@ class EndToEndTest : TempDirTest() {
     assertTrue(moduleDir.exists(), "Module directory with kebab-case name should exist")
 
     // Verify inferred package name (dot-case)
-    val packageDir = moduleDir.resolve("src/main/kotlin/com/example/my/cool/feature")
+    val packageDir = moduleDir.resolve("src/main/kotlin/com/example/screens/my/cool/feature")
     assertTrue(packageDir.exists(), "Package directory with dot-separated path should exist")
   }
 
@@ -273,7 +273,7 @@ class EndToEndTest : TempDirTest() {
     val moduleDir = tempDir.resolve("screens/test-feature")
     assertTrue(moduleDir.exists(), "Module directory should exist")
 
-    val srcDir = moduleDir.resolve("src/main/kotlin/com/example/test/feature")
+    val srcDir = moduleDir.resolve("src/main/kotlin/com/example/screens/test/feature")
     assertTrue(File(srcDir, "TestFeatureNav.kt").exists(), "Nav file should exist")
     assertTrue(File(srcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist")
     assertTrue(File(srcDir, "TestFeatureCompositor.kt").exists(), "Compositor file should exist")

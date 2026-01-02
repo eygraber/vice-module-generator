@@ -1,4 +1,4 @@
-package com.example.test
+package com.example.screens.test
 
 import com.eygraber.vice.ViceEffects
 import kotlinx.coroutines.CoroutineScope

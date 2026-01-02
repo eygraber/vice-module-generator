@@ -1,4 +1,4 @@
-package com.example.test
+package com.example.screens.test
 
 import androidx.navigation3.runtime.NavKey
 import com.example.di.scopes.NavScope
