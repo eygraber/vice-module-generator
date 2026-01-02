@@ -14,7 +14,13 @@ internal fun addToNav(
   val key = "${featureName}Key"
 
   val navPackagePath = projectPackagePrefix.replace(".", "/")
-  val navigatorsFile = File(projectDir, "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}Navigators.kt")
+  val navigatorsFile =
+    File(
+      projectDir,
+      "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
+        ".",
+      ).last().replaceFirstChar(Char::uppercase)}Navigators.kt",
+    )
 
   navigatorsFile.insert(
     newLine = "import $featurePackage.$navigator",
@@ -37,7 +43,13 @@ internal fun addToNav(
     intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
   )
 
-  val navigatorsTestFile = File(projectDir, "nav/src/test/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}NavigatorsTest.kt")
+  val navigatorsTestFile =
+    File(
+      projectDir,
+      "nav/src/test/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
+        ".",
+      ).last().replaceFirstChar(Char::uppercase)}NavigatorsTest.kt",
+    )
 
   navigatorsTestFile.insert(
     newLine = "import $featurePackage.$key",
@@ -53,7 +65,9 @@ internal fun addToNav(
     |      push($key)
     |    }
     |
-    |    val navigator = ${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}Navigators.$featureCall(backStack)
+    |    val navigator = ${projectPackagePrefix.split(
+      ".",
+    ).last().replaceFirstChar(Char::uppercase)}Navigators.$featureCall(backStack)
     |
     |    navigator.navigateBack()
     |    backStack shouldContainExactly listOf(RootKey)
@@ -67,7 +81,13 @@ internal fun addToNav(
     intoAlphabetizedSectionWithPrefix = arrayOf("  @Test\n  fun `"),
   )
 
-  val navFile = File(projectDir, "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(".").last().replaceFirstChar(Char::uppercase)}Nav.kt")
+  val navFile =
+    File(
+      projectDir,
+      "nav/src/main/kotlin/$navPackagePath/nav/${projectPackagePrefix.split(
+        ".",
+      ).last().replaceFirstChar(Char::uppercase)}Nav.kt",
+    )
 
   navFile.insert(
     newLine = "import $featurePackage.$component",
