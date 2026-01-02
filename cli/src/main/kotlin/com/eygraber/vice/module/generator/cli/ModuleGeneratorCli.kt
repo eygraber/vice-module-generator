@@ -3,7 +3,6 @@ package com.eygraber.vice.module.generator.cli
 import com.eygraber.vice.module.generator.lib.GenerationResult
 import com.eygraber.vice.module.generator.lib.ModuleGenerator
 import com.eygraber.vice.module.generator.lib.ModuleGeneratorConfig
-import com.eygraber.vice.module.generator.lib.NameInference
 import com.eygraber.vice.module.generator.lib.ValidationResult
 import java.io.File
 import kotlin.system.exitProcess
@@ -61,7 +60,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
     return 1
   }
 
-  val featurePackage = options["feature-package"]
+  val overridingFeaturePackage = options["feature-package"]
 
   if(!projectDir.exists() || !File(projectDir, "settings.gradle.kts").exists()) {
     println("Error: Please run this CLI from the project root")
@@ -75,21 +74,19 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
     projectName = projectName,
     projectPackage = projectPackage,
     featureName = featureName,
-    featurePackage = featurePackage,
+    overridingFeaturePackage = overridingFeaturePackage,
     shouldIncludeEffects = options.containsKey("with-effects"),
     shouldGeneratePreview = !options.containsKey("no-preview"),
     shouldGeneratePreviewParameterProvider = !options.containsKey("no-preview-provider"),
   )
 
-  val moduleName = NameInference.inferModuleName(featureName)
-  val packageName = featurePackage ?: "$projectPackage.${NameInference.inferPackageName(featureName)}"
-
   println("Generating module with configuration:")
   println("  Project Name: $projectName")
   println("  Project Package: $projectPackage")
+  println("  Module Name: ${config.moduleName}")
   println("  Feature Name: $featureName")
-  println("  Module Name: $moduleName")
-  println("  Package Name: $packageName")
+  println("  Feature Package: ${config.featurePackage}")
+  println("  Overriding Feature Package: $overridingFeaturePackage")
   println("  Include Effects: ${config.shouldIncludeEffects}")
   println("  Generate Preview: ${config.shouldGeneratePreview}")
   println("  Generate Preview Provider: ${config.shouldGeneratePreviewParameterProvider}")
@@ -104,7 +101,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
   }
 
   // Check if module exists
-  if(generator.moduleExists(projectDir, moduleName)) {
+  if(generator.moduleExists(projectDir, config.moduleName)) {
     println("Warning: Module already exists. Files will be generated in the existing module.")
   }
 

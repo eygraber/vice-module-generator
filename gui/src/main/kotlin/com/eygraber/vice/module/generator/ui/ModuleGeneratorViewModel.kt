@@ -183,14 +183,14 @@ internal class ModuleGeneratorViewModel(
     GlobalScope.launch(Dispatchers.IO) {
       progressText = "Generating Files"
 
-      val featurePackage = if(shouldInferPackageName) null else packageName
+      val overridingFeaturePackage = if(shouldInferPackageName) null else packageName
 
       val config = ModuleGeneratorConfig(
         projectDir = projectDir,
         projectName = projectName,
         projectPackage = projectPackage,
         featureName = featureName,
-        featurePackage = featurePackage,
+        overridingFeaturePackage = overridingFeaturePackage,
         shouldIncludeEffects = shouldGenerateViceEffects,
         shouldGeneratePreview = shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProviderInternal,

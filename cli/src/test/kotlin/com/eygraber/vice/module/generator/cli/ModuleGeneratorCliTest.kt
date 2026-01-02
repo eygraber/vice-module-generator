@@ -55,9 +55,10 @@ class ModuleGeneratorCliTest {
     assertTrue(output.contains("Generating module with configuration:"))
     assertTrue(output.contains("Project Name: TestApp"))
     assertTrue(output.contains("Project Package: com.test"))
-    assertTrue(output.contains("Feature Name: CoolFeature"))
     assertTrue(output.contains("Module Name: cool-feature"))
-    assertTrue(output.contains("Package Name: com.test.cool.feature"))
+    assertTrue(output.contains("Feature Name: CoolFeature"))
+    assertTrue(output.contains("Feature Package: com.test.screens.cool.feature"))
+    assertTrue(output.contains("Overriding Feature Package: null"))
 
     // Verify dry-run message
     assertTrue(output.contains("Dry run: No files will be generated."))
@@ -102,7 +103,8 @@ class ModuleGeneratorCliTest {
     )
 
     // Verify all options are recognized and displayed
-    assertTrue(output.contains("Package Name: com.custom.feature"))
+    assertTrue(output.contains("Feature Package: com.custom.feature"))
+    assertTrue(output.contains("Overriding Feature Package: com.custom.feature"))
     assertTrue(output.contains("Include Effects: true"))
     assertTrue(output.contains("Generate Preview: false"))
     assertTrue(output.contains("Generate Preview Provider: false"))
@@ -171,7 +173,11 @@ class ModuleGeneratorCliTest {
 
     // Verify name inference
     assertTrue(output.contains("Module Name: my-cool-feature"), "Should infer kebab-case module name")
-    assertTrue(output.contains("Package Name: com.test.my.cool.feature"), "Should infer dot-separated package name")
+    assertTrue(output.contains("Overriding Feature Package: null"))
+    assertTrue(
+      output.contains("Feature Package: com.test.screens.my.cool.feature"),
+      "Should infer dot-separated package name",
+    )
     assertTrue(output.contains("Dry run: No files will be generated."))
   }
 
