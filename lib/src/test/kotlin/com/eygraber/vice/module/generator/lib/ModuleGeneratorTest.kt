@@ -45,7 +45,8 @@ class ModuleGeneratorTest {
         shouldGeneratePreview = config.shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       )
-    } catch (e: Exception) {
+    }
+    catch(e: Exception) {
       throw AssertionError("Module generation failed: ${e.message}", e)
     }
 
@@ -143,7 +144,8 @@ class ModuleGeneratorTest {
         shouldGeneratePreview = config.shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       )
-    } catch (e: Exception) {
+    }
+    catch(e: Exception) {
       throw AssertionError("Module generation failed: ${e.message}", e)
     }
 
@@ -192,7 +194,8 @@ class ModuleGeneratorTest {
         shouldGeneratePreview = config.shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       )
-    } catch (e: Exception) {
+    }
+    catch(e: Exception) {
       throw AssertionError("Module generation failed: ${e.message}", e)
     }
 
@@ -238,7 +241,8 @@ class ModuleGeneratorTest {
         shouldGeneratePreview = config.shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       )
-    } catch (e: Exception) {
+    }
+    catch(e: Exception) {
       throw AssertionError("Module generation failed: ${e.message}", e)
     }
 
@@ -304,8 +308,8 @@ class ModuleGeneratorTest {
     File(tempDir, "screens/test-feature").mkdirs()
 
     // Module exists now
-    val moduleExistsAfter = generator.moduleExists(tempDir, "test-feature")
-    assertTrue(moduleExistsAfter, "Module should exist after directory creation")
+    val doesModuleExistAfter = generator.moduleExists(tempDir, "test-feature")
+    assertTrue(doesModuleExistAfter, "Module should exist after directory creation")
   }
 
   private fun getFixtureDir(fixtureName: String): File {
@@ -328,9 +332,13 @@ class ModuleGeneratorTest {
     val generatedContent = generated.readText().trim()
 
     assertEquals(
-      fixtureContent,
-      generatedContent,
-      "Content should match for $description\nGenerated file: ${generated.absolutePath}\nFixture file: ${fixture.absolutePath}",
+      expected = fixtureContent,
+      actual = generatedContent,
+      message = """
+      |Content should match for $description
+      |Generated file: ${generated.absolutePath}
+      |Fixture file: ${fixture.absolutePath}
+      """.trimMargin(),
     )
   }
 }

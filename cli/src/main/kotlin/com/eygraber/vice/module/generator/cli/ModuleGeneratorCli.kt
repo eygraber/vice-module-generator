@@ -16,7 +16,7 @@ import kotlin.system.exitProcess
  *
  * Example:
  *   ./gradlew :cli:run --args="com.example CoolFeature"
- *   ./gradlew :cli:run --args="com.example CoolFeature --module-name=cool-feature --package-name=com.example.cool.feature"
+ *   ./gradlew :cli:run --args="CoolFeature --module-name=cool-feature --package-name=com.other.cool.feature"
  *   ./gradlew :cli:run --args="com.example CoolFeature --with-effects --no-preview"
  */
 fun main(args: Array<String>) {
@@ -73,6 +73,11 @@ fun main(args: Array<String>) {
     println("Warning: Module already exists. Files will be generated in the existing module.")
   }
 
+  if("dry-run" in options) {
+    println("Dry run: No files will be generated.")
+    exitProcess(0)
+  }
+
   // Generate module
   println("Generating files...")
   when(val result = generator.generate(config)) {
@@ -119,28 +124,30 @@ private fun printUsage() {
     """
     Module Generator CLI
     
-    Usage: ./gradlew :cli:run --args="<featureName> [options]"
+    Usage: ./gradlew :cli:run --args="<projectPackagePrefix> <featureName> [options]"
     
     Arguments:
+      projectPackagePrefix  The root package for the project (e.g., com.example)
       featureName           The name of the feature in PascalCase (e.g., CoolFeature)
     
     Options:
       --module-name=NAME    Custom module name (default: inferred from feature name)
-      --package-name=NAME   Custom package name (default: inferred from feature name)
+      --package-name=NAME   Custom package name (default: inferred from feature name, prepended to projectPackagePrefix)
       --with-effects        Include ViceEffects class in generation
       --no-preview          Skip generating Compose preview
       --no-preview-provider Skip generating preview parameter provider
+      --dry-run             Dry run, no files will be generated
       --help, -h            Show this help message
     
     Examples:
       # Generate with inferred names
-      ./gradlew :cli:run --args="CoolFeature"
+      ./gradlew :cli:run --args="com.example CoolFeature"
       
       # Generate with custom names
-      ./gradlew :cli:run --args="CoolFeature --module-name=cool-feature"
+      ./gradlew :cli:run --args="com.example CoolFeature --module-name=cool-feature"
       
       # Generate with effects and no preview
-      ./gradlew :cli:run --args="CoolFeature --with-effects --no-preview"
+      ./gradlew :cli:run --args="com.example CoolFeature --with-effects --no-preview"
     """.trimIndent(),
   )
 }

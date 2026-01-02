@@ -38,7 +38,13 @@ fun main(args: Array<String>) {
       ) {
         Surface(modifier = Modifier.fillMaxSize()) {
           GeneratorErrorDialog(
-            text = "Error: Project package prefix is required.\n\nUsage: ./gradlew :gui:run --args=\"<projectPackagePrefix>\"\n\nExample: ./gradlew :gui:run --args=\"com.example\"",
+            text = """
+            |Error: Project package prefix is required.
+            |
+            |Usage: ./gradlew :gui:run --args="<projectPackagePrefix>"
+            |
+            |Example: ./gradlew :gui:run --args="com.example"
+            """.trimMargin(),
           )
         }
       }
