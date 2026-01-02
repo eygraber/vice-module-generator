@@ -1,4 +1,4 @@
-package com.example.test
+package com.example.screens.test
 
 import androidx.compose.runtime.Immutable
 

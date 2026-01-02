@@ -1,4 +1,4 @@
-package com.example.test
+package com.example.screens.test
 
 import app.cash.paparazzi.Paparazzi
 import com.example.vice.test.utils.PaparazziDeviceConfig

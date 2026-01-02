@@ -39,7 +39,7 @@ public class ModuleGenerator {
     // Compute derived values
     val moduleName = NameInference.inferModuleName(config.featureName)
     val packageName = config.featurePackage
-      ?: "${config.projectPackage}.${NameInference.inferPackageName(config.featureName)}"
+      ?: "${config.projectPackage}.screens.${NameInference.inferPackageName(config.featureName)}"
 
     createScreensModule(
       projectDir = config.projectDir,
