@@ -14,11 +14,16 @@ public data class ModuleGeneratorConfig(
   val projectName: String,
   val projectPackage: String,
   val featureName: String,
-  val featurePackage: String? = null,
+  private val overridingFeaturePackage: String? = null,
   val shouldIncludeEffects: Boolean = false,
   val shouldGeneratePreview: Boolean = true,
   val shouldGeneratePreviewParameterProvider: Boolean = true,
-)
+) {
+  val featurePackage: String = overridingFeaturePackage
+    ?: "$projectPackage.screens.${NameInference.inferPackageName(featureName)}"
+
+  val moduleName: String = NameInference.inferModuleName(featureName)
+}
 
 /**
  * Result of module generation.
@@ -36,16 +41,11 @@ public class ModuleGenerator {
    * Generates a new screen module with the given configuration.
    */
   public fun generate(config: ModuleGeneratorConfig): GenerationResult = try {
-    // Compute derived values
-    val moduleName = NameInference.inferModuleName(config.featureName)
-    val packageName = config.featurePackage
-      ?: "${config.projectPackage}.screens.${NameInference.inferPackageName(config.featureName)}"
-
     createScreensModule(
       projectDir = config.projectDir,
       projectName = config.projectName,
-      moduleName = moduleName,
-      packageName = packageName,
+      moduleName = config.moduleName,
+      featurePackage = config.featurePackage,
       featureName = config.featureName,
       projectPackage = config.projectPackage,
       shouldIncludeEffects = config.shouldIncludeEffects,
@@ -55,18 +55,18 @@ public class ModuleGenerator {
 
     addModuleToSettings(
       projectDir = config.projectDir,
-      moduleName = moduleName,
+      moduleName = config.moduleName,
     )
 
     addModuleToAppAndNavDependencies(
       projectDir = config.projectDir,
-      moduleName = moduleName,
+      moduleName = config.moduleName,
     )
 
     addToNav(
       projectDir = config.projectDir,
       projectName = config.projectName,
-      featurePackage = packageName,
+      featurePackage = config.featurePackage,
       featureName = config.featureName,
       projectPackage = config.projectPackage,
     )
@@ -86,8 +86,7 @@ public class ModuleGenerator {
     recordTask: String,
   ) {
     val projectRoot = config.projectDir
-    val inferredModuleName = NameInference.inferModuleName(config.featureName)
-    val gradleTask = ":screens:$inferredModuleName:$recordTask"
+    val gradleTask = ":screens:${config.moduleName}:$recordTask"
 
     onTaskAboutToRun(gradleTask)
 
@@ -111,8 +110,7 @@ public class ModuleGenerator {
       errors.add("Project directory does not exist or is not a directory")
     }
 
-    val moduleName = NameInference.inferModuleName(config.featureName)
-    if(!moduleName.matches(ModuleNameRegex)) {
+    if(!config.moduleName.matches(ModuleNameRegex)) {
       errors.add(
         """
         |Module name is invalid:
@@ -123,9 +121,7 @@ public class ModuleGenerator {
       )
     }
 
-    val packageName = config.featurePackage
-      ?: "${config.projectPackage}.${NameInference.inferPackageName(config.featureName)}"
-    if(!packageName.matches(PackageNameRegex)) {
+    if(!config.featurePackage.matches(PackageNameRegex)) {
       errors.add(
         """
         |Package name is invalid:

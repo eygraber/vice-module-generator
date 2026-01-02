@@ -20,7 +20,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "TestFeature",
-      featurePackage = null, // Will be inferred
+      overridingFeaturePackage = null, // Will be inferred
       shouldIncludeEffects = false,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,
@@ -48,7 +48,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "TestFeature",
-      featurePackage = "com.example.test.feature",
+      overridingFeaturePackage = "com.example.test.feature",
       shouldIncludeEffects = true,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,
@@ -73,7 +73,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "TestFeature",
-      featurePackage = "com.example.test.feature",
+      overridingFeaturePackage = "com.example.test.feature",
       shouldIncludeEffects = false,
       shouldGeneratePreview = false,
       shouldGeneratePreviewParameterProvider = false,
@@ -98,7 +98,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.Example", // Invalid - uppercase
       featureName = "TestFeature",
-      featurePackage = null,
+      overridingFeaturePackage = null,
       shouldIncludeEffects = false,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,
@@ -137,7 +137,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "AlphaFeature",
-      featurePackage = null,
+      overridingFeaturePackage = null,
       shouldIncludeEffects = false,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,
@@ -151,7 +151,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "BetaFeature",
-      featurePackage = null,
+      overridingFeaturePackage = null,
       shouldIncludeEffects = false,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,
@@ -184,7 +184,7 @@ class EndToEndTest : TempDirTest() {
       projectName = "Example",
       projectPackage = "com.example",
       featureName = "MyCoolFeature",
-      featurePackage = null, // Will be inferred
+      overridingFeaturePackage = null, // Will be inferred
       shouldIncludeEffects = false,
       shouldGeneratePreview = true,
       shouldGeneratePreviewParameterProvider = true,

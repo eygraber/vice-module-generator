@@ -6,7 +6,7 @@ internal fun createScreensModule(
   projectDir: File,
   projectName: String,
   moduleName: String,
-  packageName: String,
+  featurePackage: String,
   featureName: String,
   projectPackage: String,
   shouldIncludeEffects: Boolean,
@@ -17,7 +17,7 @@ internal fun createScreensModule(
   val moduleDir = File(screensDir, moduleName.replace(":", "/")).apply { mkdir() }
   val mainDir = File(moduleDir, "src" / "main").apply { mkdirs() }
   val testDir = File(moduleDir, "src" / "test").apply { mkdirs() }
-  val packagePath = packageName.replace(".", File.separator)
+  val packagePath = featurePackage.replace(".", File.separator)
   val mainPackageDir = File(mainDir, "kotlin" / packagePath).apply { mkdirs() }
   val testPackageDir = File(testDir, "kotlin" / packagePath).apply { mkdirs() }
 
@@ -41,7 +41,7 @@ internal fun createScreensModule(
         |}
         |
         |android {
-        |  namespace = "$packageName"
+        |  namespace = "$featurePackage"
         |}
         |
         |dependencies {
@@ -154,7 +154,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |$imports
         |
@@ -200,7 +200,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |class $navigatorName(
         |  private val onNavigateBack: () -> Unit,
@@ -220,7 +220,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |import androidx.compose.runtime.Composable
         |import com.eygraber.vice.ViceCompositor
@@ -245,7 +245,7 @@ internal fun createScreensModule(
         createNewFile()
         writeText(
           """
-          |package $packageName
+          |package $featurePackage
           |
           |import com.eygraber.vice.ViceEffects
           |import kotlinx.coroutines.CoroutineScope
@@ -267,7 +267,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |sealed interface $intentName
         |
@@ -365,7 +365,7 @@ internal fun createScreensModule(
 
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |$viewImports
         |
@@ -400,7 +400,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |import androidx.compose.runtime.Immutable
         |
@@ -420,7 +420,7 @@ internal fun createScreensModule(
           """
           |@file:Suppress("ktlint:standard:argument-list-wrapping", "ktlint:standard:max-line-length", "StringLiteralDuplication")
           |
-          |package $packageName
+          |package $featurePackage
           |
           |import $projectPackage.ui.compose.NamedPreviewParameterProvider
           |
@@ -458,7 +458,7 @@ internal fun createScreensModule(
       createNewFile()
       writeText(
         """
-        |package $packageName
+        |package $featurePackage
         |
         |$screenshotTestImports
         |
