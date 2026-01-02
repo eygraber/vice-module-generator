@@ -147,13 +147,31 @@ internal fun File.insertMultiline(
     val currentLineAtInsertionPoint = matchingLines[insertionPoint]
     fileText.indexOf(currentLineAtInsertionPoint)
   }
-  else {
+  else if(matchingLines.isNotEmpty()) {
     val currentLineAtInsertionPoint = matchingLines.last()
     val currentLineIndex = fileText.indexOf(currentLineAtInsertionPoint)
     val currentLineUntilEOF = fileText.substring(currentLineIndex)
-    currentLineIndex +
-      currentLineUntilEOF.indexOf(lastLineSuffixResolver) +
-      lastLineSuffixResolver.length
+    val suffixIndexInWindow = currentLineUntilEOF.indexOf(lastLineSuffixResolver)
+    if(suffixIndexInWindow >= 0) {
+      currentLineIndex + suffixIndexInWindow + lastLineSuffixResolver.length
+    }
+    else {
+      // Fallback: insert before the last closing brace
+      val lastBrace = fileText.lastIndexOf("}")
+      if(lastBrace >= 0) lastBrace else fileText.length
+    }
+  }
+  else {
+    // No matching lines found - find the lastLineSuffixResolver in the file
+    val suffixIndex = fileText.indexOf(lastLineSuffixResolver)
+    if(suffixIndex >= 0) {
+      suffixIndex + lastLineSuffixResolver.length
+    }
+    else {
+      // Fallback: insert before the last closing brace or at end of file
+      val lastBrace = fileText.lastIndexOf("}")
+      if(lastBrace >= 0) lastBrace else fileText.length
+    }
   }
 
   val insertion = if(insertionPoint < matchingLines.size) {

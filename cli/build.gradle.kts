@@ -11,6 +11,8 @@ plugins {
 
 dependencies {
   implementation(projects.lib)
+
+  testImplementation(kotlin("test"))
 }
 
 application {

@@ -12,49 +12,84 @@ import kotlin.system.exitProcess
  * Command-line interface for the module generator.
  *
  * Usage:
- *   ./gradlew :cli:run --args="<projectPackagePrefix> <featureName> [options]"
+ *   ./gradlew :cli:run --args="--project-name=<name> --project-package=<package> --feature=<featureName> [options]"
  *
  * Example:
- *   ./gradlew :cli:run --args="com.example CoolFeature"
- *   ./gradlew :cli:run --args="CoolFeature --module-name=cool-feature --package-name=com.other.cool.feature"
- *   ./gradlew :cli:run --args="com.example CoolFeature --with-effects --no-preview"
+ *   ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature"
+ *   ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --feature-package=com.other.cool.feature"
+ *   ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --with-effects --no-preview"
  */
 fun main(args: Array<String>) {
+  exitProcess(runCli(args))
+}
+
+/**
+ * Runs the CLI and returns an exit code (0 for success, non-zero for failure).
+ * This function is internal for testing purposes.
+ */
+@Suppress("ReturnCount")
+internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
   if(args.isEmpty() || args[0] == "--help" || args[0] == "-h") {
     printUsage()
-    exitProcess(0)
+    return 0
   }
 
-  val projectPackagePrefix = args[0]
-  val featureName = args[1]
-  val options = parseOptions(args.drop(2))
+  val options = parseOptions(args)
 
-  val projectDir = File(".")
+  // Validate required parameters
+  val projectName = options["project-name"]
+  if(projectName == null) {
+    println("Error: --project-name argument is required")
+    println()
+    printUsage()
+    return 1
+  }
+
+  val projectPackage = options["project-package"]
+  if(projectPackage == null) {
+    println("Error: --project-package argument is required")
+    println()
+    printUsage()
+    return 1
+  }
+
+  val featureName = options["feature"]
+  if(featureName == null) {
+    println("Error: --feature argument is required")
+    println()
+    printUsage()
+    return 1
+  }
+
+  val featurePackage = options["feature-package"]
+
   if(!projectDir.exists() || !File(projectDir, "settings.gradle.kts").exists()) {
     println("Error: Please run this CLI from the project root")
-    exitProcess(1)
+    return 1
   }
 
   val generator = ModuleGenerator()
 
-  val moduleName = options["module-name"] ?: NameInference.inferModuleName(featureName)
-  val packageName = options["package-name"] ?: "$projectPackagePrefix.${NameInference.inferPackageName(featureName)}"
-
   val config = ModuleGeneratorConfig(
     projectDir = projectDir,
-    moduleName = moduleName,
-    packageName = packageName,
+    projectName = projectName,
+    projectPackage = projectPackage,
     featureName = featureName,
-    projectPackagePrefix = projectPackagePrefix,
+    featurePackage = featurePackage,
     shouldIncludeEffects = options.containsKey("with-effects"),
     shouldGeneratePreview = !options.containsKey("no-preview"),
     shouldGeneratePreviewParameterProvider = !options.containsKey("no-preview-provider"),
   )
 
+  val moduleName = NameInference.inferModuleName(featureName)
+  val packageName = featurePackage ?: "$projectPackage.${NameInference.inferPackageName(featureName)}"
+
   println("Generating module with configuration:")
-  println("  Feature Name: ${config.featureName}")
-  println("  Module Name: ${config.moduleName}")
-  println("  Package Name: ${config.packageName}")
+  println("  Project Name: $projectName")
+  println("  Project Package: $projectPackage")
+  println("  Feature Name: $featureName")
+  println("  Module Name: $moduleName")
+  println("  Package Name: $packageName")
   println("  Include Effects: ${config.shouldIncludeEffects}")
   println("  Generate Preview: ${config.shouldGeneratePreview}")
   println("  Generate Preview Provider: ${config.shouldGeneratePreviewParameterProvider}")
@@ -65,7 +100,7 @@ fun main(args: Array<String>) {
   if(validationResult is ValidationResult.Invalid) {
     println("Validation failed:")
     validationResult.errors.forEach { println("  - $it") }
-    exitProcess(1)
+    return 1
   }
 
   // Check if module exists
@@ -75,31 +110,39 @@ fun main(args: Array<String>) {
 
   if("dry-run" in options) {
     println("Dry run: No files will be generated.")
-    exitProcess(0)
+    return 0
   }
 
   // Generate module
   println("Generating files...")
   when(val result = generator.generate(config)) {
-    is GenerationResult.Success -> {
-      println("✓ Module generated successfully!")
-      println()
-      println("Next steps:")
-      println("  1. Review the generated files in screens/$moduleName")
-      println("  2. Run tests: ./gradlew :screens:$moduleName:test")
-      println("  3. Generate screenshots: ./gradlew :screens:$moduleName:recordPaparazziDevDebug")
-      exitProcess(0)
-    }
+    is GenerationResult.Success -> println("✓ Module generated successfully!")
 
     is GenerationResult.Failure -> {
       println("✗ Generation failed: ${result.message}")
       result.cause?.printStackTrace()
-      exitProcess(1)
+      return 1
     }
+  }
+
+  return runCatching {
+    generator.recordScreenshots(
+      onTaskAboutToRun = { gradleTask ->
+        println("About to run task: $gradleTask")
+      },
+      config = config,
+      recordTask = "recordPaparazziDevDebug",
+    )
+
+    0
+  }.getOrElse { error ->
+    println("✗ Recording screenshots failed: ${error.message}")
+    error.printStackTrace()
+    1
   }
 }
 
-private fun parseOptions(args: List<String>): Map<String, String> {
+private fun parseOptions(args: Array<String>): Map<String, String> {
   val options = mutableMapOf<String, String>()
 
   for(arg in args) {
@@ -124,30 +167,30 @@ private fun printUsage() {
     """
     Module Generator CLI
     
-    Usage: ./gradlew :cli:run --args="<projectPackagePrefix> <featureName> [options]"
+    Usage: ./gradlew :cli:run --args="--project-name=<name> --project-package=<package> --feature=<featureName> [options]"
     
-    Arguments:
-      projectPackagePrefix  The root package for the project (e.g., com.example)
-      featureName           The name of the feature in PascalCase (e.g., CoolFeature)
+    Required Arguments:
+      --project-name=NAME               The name of the project (e.g., MyApp)
+      --project-package=PACKAGE         The root package for the project (e.g., com.example)
+      --feature=NAME                    The name of the feature in PascalCase (e.g., CoolFeature)
     
     Options:
-      --module-name=NAME    Custom module name (default: inferred from feature name)
-      --package-name=NAME   Custom package name (default: inferred from feature name, prepended to projectPackagePrefix)
-      --with-effects        Include ViceEffects class in generation
-      --no-preview          Skip generating Compose preview
-      --no-preview-provider Skip generating preview parameter provider
-      --dry-run             Dry run, no files will be generated
-      --help, -h            Show this help message
+      --feature-package=PACKAGE         Custom package name for the feature (default: <project-package>.<inferred-from-feature>)
+      --with-effects                    Include ViceEffects class in generation
+      --no-preview                      Skip generating Compose preview
+      --no-preview-provider             Skip generating preview parameter provider
+      --dry-run                         Dry run, no files will be generated
+      --help, -h                        Show this help message
     
     Examples:
-      # Generate with inferred names
-      ./gradlew :cli:run --args="com.example CoolFeature"
+      # Generate with inferred package name
+      ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature"
       
-      # Generate with custom names
-      ./gradlew :cli:run --args="com.example CoolFeature --module-name=cool-feature"
+      # Generate with custom feature package
+      ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --feature-package=com.other.cool.feature"
       
       # Generate with effects and no preview
-      ./gradlew :cli:run --args="com.example CoolFeature --with-effects --no-preview"
+      ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --with-effects --no-preview"
     """.trimIndent(),
   )
 }

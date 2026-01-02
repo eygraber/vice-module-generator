@@ -29,9 +29,10 @@ import javax.swing.UIManager
 fun main(args: Array<String>) {
   UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
-  val projectPackagePrefix = if(args.isEmpty()) "" else args[0]
+  val projectName = if(args.isEmpty()) "" else args[0]
+  val projectPackage = if(args.size < 2) "" else args[1]
 
-  if(projectPackagePrefix.isBlank()) {
+  if(projectName.isBlank() || projectPackage.isBlank()) {
     singleWindowApplication(title = "Module Generator") {
       MaterialTheme(
         colorScheme = if(isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
@@ -39,45 +40,46 @@ fun main(args: Array<String>) {
         Surface(modifier = Modifier.fillMaxSize()) {
           GeneratorErrorDialog(
             text = """
-            |Error: Project package prefix is required.
+            |Error: Project name and package are required.
             |
-            |Usage: ./gradlew :gui:run --args="<projectPackagePrefix>"
+            |Usage: ./gradlew :gui:run --args="<projectName> <projectPackage>"
             |
-            |Example: ./gradlew :gui:run --args="com.example"
+            |Example: ./gradlew :gui:run --args="MyApp com.example"
             """.trimMargin(),
           )
         }
       }
     }
-    return
   }
+  else {
+    val viewModel = ModuleGeneratorViewModel(
+      projectName = projectName,
+      projectPackage = projectPackage,
+    )
 
-  val viewModel = ModuleGeneratorViewModel(
-    packageNamePrefix = projectPackagePrefix,
-  )
-
-  singleWindowApplication(title = "Module Generator") {
-    MaterialTheme(
-      colorScheme = if(isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
-    ) {
-      Surface(modifier = Modifier.fillMaxSize()) {
-        if(viewModel.isProgressShowing) {
-          Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-          ) {
-            Text(viewModel.progressText)
-            CircularProgressIndicator()
+    singleWindowApplication(title = "Module Generator") {
+      MaterialTheme(
+        colorScheme = if(isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
+      ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+          if(viewModel.isProgressShowing) {
+            Column(
+              modifier = Modifier.fillMaxSize(),
+              horizontalAlignment = Alignment.CenterHorizontally,
+              verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            ) {
+              Text(viewModel.progressText)
+              CircularProgressIndicator()
+            }
           }
-        }
-        else if(viewModel.isProjectDirValid) {
-          Generator(viewModel)
-        }
-        else {
-          GeneratorErrorDialog(
-            text = "Please run the generator in the root of the project.",
-          )
+          else if(viewModel.isProjectDirValid) {
+            Generator(viewModel)
+          }
+          else {
+            GeneratorErrorDialog(
+              text = "Please run the generator in the root of the project.",
+            )
+          }
         }
       }
     }
