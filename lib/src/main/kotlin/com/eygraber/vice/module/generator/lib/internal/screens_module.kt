@@ -28,7 +28,6 @@ internal fun createScreensModule(
       writeText(
         """
         |plugins {
-        |  alias(libs.plugins.kotlinAndroid)
         |  alias(libs.plugins.conventionsAndroidLibrary)
         |  alias(libs.plugins.conventionsCompose)
         |  alias(libs.plugins.conventionsDetekt)
