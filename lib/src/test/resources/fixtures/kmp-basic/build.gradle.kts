@@ -51,8 +51,6 @@ kotlin {
       implementation(projects.ui.compose)
       implementation(projects.ui.material)
 
-      api(libs.androidx.navigation3.runtime)
-
       implementation(libs.compose.foundation)
       implementation(libs.compose.foundationLayout)
       implementation(libs.compose.material3)
