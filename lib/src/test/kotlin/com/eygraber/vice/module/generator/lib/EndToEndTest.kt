@@ -228,7 +228,7 @@ class EndToEndTest : TempDirTest() {
     verifyKmpModuleCreated()
     verifySettingsUpdated()
     verifyKmpNavDependenciesUpdated()
-    verifyNavigationFilesUpdated()
+    verifyKmpNavigationFilesUpdated()
   }
 
   @Test
@@ -306,7 +306,7 @@ class EndToEndTest : TempDirTest() {
     assertTrue(sharedContent.contains("api(projects.screens.betaFeature)"))
 
     // Verify both are in nav files
-    val navigatorsContent = readGeneratedFile("nav/src/main/kotlin/com/example/nav/ExampleNavigators.kt")
+    val navigatorsContent = readGeneratedFile("nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt")
     assertTrue(navigatorsContent.contains("fun alphaFeature("))
     assertTrue(navigatorsContent.contains("fun betaFeature("))
   }
@@ -350,7 +350,7 @@ class EndToEndTest : TempDirTest() {
       content = """
       |package com.example.nav
       |
-      |class ExampleNavigators {
+      |internal object ExampleNavigators {
       |}
       """.trimMargin(),
     )
@@ -382,8 +382,8 @@ class EndToEndTest : TempDirTest() {
     // Create basic directory structure
     tempDir.resolve("screens").mkdirs()
     tempDir.resolve("apps/shared").mkdirs()
-    tempDir.resolve("nav/src/main/kotlin/com/example/nav").mkdirs()
-    tempDir.resolve("nav/src/test/kotlin/com/example/nav").mkdirs()
+    tempDir.resolve("nav/src/commonMain/kotlin/com/example/nav").mkdirs()
+    tempDir.resolve("nav/src/commonTest/kotlin/com/example/nav").mkdirs()
 
     // Create settings.gradle.kts
     createFile(
@@ -421,18 +421,18 @@ class EndToEndTest : TempDirTest() {
 
     // Create navigators file
     createFile(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNavigators.kt",
+      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt",
       content = """
       |package com.example.nav
       |
-      |class ExampleNavigators {
+      |internal object ExampleNavigators {
       |}
       """.trimMargin(),
     )
 
     // Create navigators test file
     createFile(
-      path = "nav/src/test/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
+      path = "nav/src/commonTest/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
       content = """
       |package com.example.nav
       |
@@ -443,7 +443,7 @@ class EndToEndTest : TempDirTest() {
 
     // Create nav file
     createFile(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNav.kt",
+      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNav.kt",
       content = """
       |package com.example.nav
       |
@@ -538,6 +538,26 @@ class EndToEndTest : TempDirTest() {
       path = "nav/src/test/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
       expectedContent = "testFeatureNavigator",
       description = "Navigators test",
+    )
+  }
+
+  private fun verifyKmpNavigationFilesUpdated() {
+    assertGeneratedFileContains(
+      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt",
+      expectedContent = "TestFeatureNavigator",
+      description = "KMP Navigators",
+    )
+
+    assertGeneratedFileContains(
+      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNav.kt",
+      expectedContent = "TestFeatureKey",
+      description = "KMP Nav",
+    )
+
+    assertGeneratedFileContains(
+      path = "nav/src/commonTest/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
+      expectedContent = "testFeatureNavigator",
+      description = "KMP Navigators test",
     )
   }
 }

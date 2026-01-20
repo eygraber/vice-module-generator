@@ -8,17 +8,21 @@ internal fun addToNav(
   featurePackage: String,
   featureName: String,
   projectPackage: String,
+  isKmpProject: Boolean,
 ): Boolean {
   val featureCall = featureName.replaceFirstChar(Char::lowercase)
   val component = "${featureName}Component"
   val navigator = "${featureName}Navigator"
   val key = "${featureName}Key"
 
+  val mainSourceSetName = if(isKmpProject) "commonMain" else "main"
+  val testSourceSetName = if(isKmpProject) "commonTest" else "test"
+
   val projectPackagePath = projectPackage.replace(".", "/")
   val navigatorsFile =
     File(
       projectDir,
-      "nav/src/main/kotlin/$projectPackagePath/nav/${projectName}Navigators.kt",
+      "nav/src/$mainSourceSetName/kotlin/$projectPackagePath/nav/${projectName}Navigators.kt",
     )
 
   navigatorsFile.insert(
@@ -45,7 +49,7 @@ internal fun addToNav(
   val navigatorsTestFile =
     File(
       projectDir,
-      "nav/src/test/kotlin/$projectPackagePath/nav/${projectName}NavigatorsTest.kt",
+      "nav/src/$testSourceSetName/kotlin/$projectPackagePath/nav/${projectName}NavigatorsTest.kt",
     )
 
   navigatorsTestFile.insert(
@@ -79,7 +83,7 @@ internal fun addToNav(
   val navFile =
     File(
       projectDir,
-      "nav/src/main/kotlin/$projectPackagePath/nav/${projectName}Nav.kt",
+      "nav/src/$mainSourceSetName/kotlin/$projectPackagePath/nav/${projectName}Nav.kt",
     )
 
   navFile.insert(
@@ -91,6 +95,28 @@ internal fun addToNav(
     newLine = "import $featurePackage.$key",
     intoAlphabetizedSectionWithPrefix = "import ",
   )
+
+  // Update NavKey.kt file to register the new key for serialization (KMP only)
+  if(isKmpProject) {
+    val navKeyFile =
+      File(
+        projectDir,
+        "nav/src/$mainSourceSetName/kotlin/$projectPackagePath/nav/NavKey.kt",
+      )
+
+    if(navKeyFile.exists()) {
+      navKeyFile.insert(
+        newLine = "import $featurePackage.$key",
+        intoAlphabetizedSectionWithPrefix = "import ",
+      )
+
+      val subclassRegistration = "  subclass($key::class, $key.serializer())"
+      navKeyFile.insert(
+        newLine = subclassRegistration,
+        intoAlphabetizedSectionWithPrefix = "  subclass(",
+      )
+    }
+  }
 
   val navComponentName = "${projectName}NavComponent"
   val navigatorsName = "${projectName}Navigators"
