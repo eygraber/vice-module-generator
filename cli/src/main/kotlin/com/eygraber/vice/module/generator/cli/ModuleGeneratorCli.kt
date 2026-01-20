@@ -78,6 +78,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
     shouldIncludeEffects = options.containsKey("with-effects"),
     shouldGeneratePreview = !options.containsKey("no-preview"),
     shouldGeneratePreviewParameterProvider = !options.containsKey("no-preview-provider"),
+    isKmpProject = options.containsKey("kmp"),
   )
 
   println("Generating module with configuration:")
@@ -90,6 +91,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
   println("  Include Effects: ${config.shouldIncludeEffects}")
   println("  Generate Preview: ${config.shouldGeneratePreview}")
   println("  Generate Preview Provider: ${config.shouldGeneratePreviewParameterProvider}")
+  println("  KMP/CMP Project: ${config.isKmpProject}")
   println()
 
   // Validate configuration
@@ -163,31 +165,35 @@ private fun printUsage() {
   println(
     """
     Module Generator CLI
-    
+
     Usage: ./gradlew :cli:run --args="--project-name=<name> --project-package=<package> --feature=<featureName> [options]"
-    
+
     Required Arguments:
       --project-name=NAME               The name of the project (e.g., MyApp)
       --project-package=PACKAGE         The root package for the project (e.g., com.example)
       --feature=NAME                    The name of the feature in PascalCase (e.g., CoolFeature)
-    
+
     Options:
       --feature-package=PACKAGE         Custom package name for the feature (default: <project-package>.<inferred-from-feature>)
       --with-effects                    Include ViceEffects class in generation
       --no-preview                      Skip generating Compose preview
       --no-preview-provider             Skip generating preview parameter provider
+      --kmp                             Generate for Kotlin/Compose Multiplatform project
       --dry-run                         Dry run, no files will be generated
       --help, -h                        Show this help message
-    
+
     Examples:
       # Generate with inferred package name
       ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature"
-      
+
       # Generate with custom feature package
       ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --feature-package=com.other.cool.feature"
-      
+
       # Generate with effects and no preview
       ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --with-effects --no-preview"
+
+      # Generate for KMP/CMP project
+      ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --kmp"
     """.trimIndent(),
   )
 }

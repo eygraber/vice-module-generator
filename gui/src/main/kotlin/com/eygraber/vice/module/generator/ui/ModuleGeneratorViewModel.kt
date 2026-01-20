@@ -36,6 +36,7 @@ internal class ModuleGeneratorViewModel(
   var shouldInferModuleName by mutableStateOf(true)
   var shouldInferPackageName by mutableStateOf(packageNamePrefix.isNotBlank())
   var shouldGeneratePreview by mutableStateOf(true)
+  var isKmpProject by mutableStateOf(false)
 
   private var shouldGeneratePreviewParameterProviderInternal by mutableStateOf(true)
   val shouldGeneratePreviewParameterProvider by derivedStateOf {
@@ -64,6 +65,10 @@ internal class ModuleGeneratorViewModel(
 
   fun onGenerateViceEffectsChange(newValue: Boolean) {
     shouldGenerateViceEffects = newValue
+  }
+
+  fun onIsKmpProjectChange(newValue: Boolean) {
+    isKmpProject = newValue
   }
 
   fun onInferPackageNameChange(newValue: Boolean) {
@@ -194,6 +199,7 @@ internal class ModuleGeneratorViewModel(
         shouldIncludeEffects = shouldGenerateViceEffects,
         shouldGeneratePreview = shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProviderInternal,
+        isKmpProject = isKmpProject,
       )
 
       val validationResult = generator.validate(config)

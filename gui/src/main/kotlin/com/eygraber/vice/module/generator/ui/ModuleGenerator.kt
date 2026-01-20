@@ -104,6 +104,12 @@ private fun Generator(viewModel: ModuleGeneratorViewModel) {
       onCheckedChange = viewModel::onGenerateViceEffectsChange,
     )
 
+    GeneratorCheckbox(
+      isChecked = viewModel.isKmpProject,
+      title = "KMP/CMP",
+      onCheckedChange = viewModel::onIsKmpProjectChange,
+    )
+
     Row {
       GeneratorCheckbox(
         isChecked = viewModel.shouldInferPackageName,

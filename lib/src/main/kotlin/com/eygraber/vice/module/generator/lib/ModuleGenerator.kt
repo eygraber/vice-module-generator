@@ -18,6 +18,7 @@ public data class ModuleGeneratorConfig(
   val shouldIncludeEffects: Boolean = false,
   val shouldGeneratePreview: Boolean = true,
   val shouldGeneratePreviewParameterProvider: Boolean = true,
+  val isKmpProject: Boolean = false,
 ) {
   val featurePackage: String = overridingFeaturePackage
     ?: "$projectPackage.screens.${NameInference.inferPackageName(featureName)}"
@@ -51,6 +52,7 @@ public class ModuleGenerator {
       shouldIncludeEffects = config.shouldIncludeEffects,
       shouldGeneratePreview = config.shouldGeneratePreview,
       shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
+      isKmpProject = config.isKmpProject,
     )
 
     addModuleToSettings(
@@ -61,6 +63,7 @@ public class ModuleGenerator {
     addModuleToAppAndNavDependencies(
       projectDir = config.projectDir,
       moduleName = config.moduleName,
+      isKmpProject = config.isKmpProject,
     )
 
     addToNav(

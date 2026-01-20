@@ -24,6 +24,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "test-feature",
+      isKmpProject = false,
     )
 
     assertTrue(result, "Should successfully add module")
@@ -52,6 +53,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "beta-feature",
+      isKmpProject = false,
     )
 
     assertTrue(result, "Should successfully add module")
@@ -92,6 +94,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "beta-feature",
+      isKmpProject = false,
     )
 
     assertTrue(result, "Should successfully add module")
@@ -133,6 +136,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "gamma-feature",
+      isKmpProject = false,
     )
 
     assertTrue(result, "Should successfully add module")
@@ -172,6 +176,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "test-feature",
+      isKmpProject = false,
     )
 
     assertTrue(result, "Should successfully add module to both files")
@@ -205,6 +210,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
     val result = addModuleToAppAndNavDependencies(
       projectDir = tempDir,
       moduleName = "existing-feature",
+      isKmpProject = false,
     )
 
     assertFalse(result, "Should not add duplicate module")
@@ -231,7 +237,7 @@ class AppAndNavDependenciesTest : TempDirTest() {
       fixturePath = "fixtures/app/empty-dependencies.gradle.kts",
     )
 
-    addModuleToAppAndNavDependencies(tempDir, "my-cool-feature")
+    addModuleToAppAndNavDependencies(tempDir, "my-cool-feature", isKmpProject = false)
 
     assertGeneratedFileContains(
       path = "app/build.gradle.kts",
@@ -254,14 +260,165 @@ class AppAndNavDependenciesTest : TempDirTest() {
       fixturePath = "fixtures/app/with-existing-screens.gradle.kts",
     )
 
-    addModuleToAppAndNavDependencies(tempDir, "alpha-feature")
-    addModuleToAppAndNavDependencies(tempDir, "beta-feature")
-    addModuleToAppAndNavDependencies(tempDir, "gamma-feature")
+    addModuleToAppAndNavDependencies(tempDir, "alpha-feature", isKmpProject = false)
+    addModuleToAppAndNavDependencies(tempDir, "beta-feature", isKmpProject = false)
+    addModuleToAppAndNavDependencies(tempDir, "gamma-feature", isKmpProject = false)
 
     val appContent = readGeneratedFile("app/build.gradle.kts")
     assertTrue(appContent.contains("implementation(projects.screens.alphaFeature)"))
     assertTrue(appContent.contains("implementation(projects.screens.betaFeature)"))
     assertTrue(appContent.contains("implementation(projects.screens.gammaFeature)"))
     assertTrue(appContent.contains("implementation(projects.screens.existingFeature)"))
+  }
+
+  @Test
+  fun `adds module to KMP apps shared build file`() {
+    tempDir.resolve("apps/shared").mkdirs()
+    tempDir.resolve("nav").mkdirs()
+
+    createFileFromFixture(
+      targetPath = "apps/shared/build.gradle.kts",
+      fixturePath = "fixtures/kmp/empty-commonmain-dependencies.gradle.kts",
+    )
+    createFileFromFixture(
+      targetPath = "nav/build.gradle.kts",
+      fixturePath = "fixtures/kmp/empty-commonmain-dependencies.gradle.kts",
+    )
+
+    val result = addModuleToAppAndNavDependencies(
+      projectDir = tempDir,
+      moduleName = "test-feature",
+      isKmpProject = true,
+    )
+
+    assertTrue(result, "Should successfully add module to KMP project")
+    assertGeneratedFileContains(
+      path = "apps/shared/build.gradle.kts",
+      expectedContent = "api(projects.screens.testFeature)",
+      description = "Apps/shared build file",
+    )
+  }
+
+  @Test
+  fun `adds module to KMP nav build file in commonMain dependencies`() {
+    tempDir.resolve("apps/shared").mkdirs()
+    tempDir.resolve("nav").mkdirs()
+
+    createFileFromFixture(
+      targetPath = "apps/shared/build.gradle.kts",
+      fixturePath = "fixtures/kmp/empty-commonmain-dependencies.gradle.kts",
+    )
+    createFileFromFixture(
+      targetPath = "nav/build.gradle.kts",
+      fixturePath = "fixtures/kmp/empty-commonmain-dependencies.gradle.kts",
+    )
+
+    val result = addModuleToAppAndNavDependencies(
+      projectDir = tempDir,
+      moduleName = "test-feature",
+      isKmpProject = true,
+    )
+
+    assertTrue(result, "Should successfully add module")
+    assertGeneratedFileContains(
+      path = "nav/build.gradle.kts",
+      expectedContent = "implementation(projects.screens.testFeature)",
+      description = "Nav build file",
+    )
+  }
+
+  @Test
+  fun `adds module to KMP in alphabetical order in apps shared`() {
+    tempDir.resolve("apps/shared").mkdirs()
+    tempDir.resolve("nav").mkdirs()
+
+    createFileFromFixture(
+      targetPath = "apps/shared/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+    createFileFromFixture(
+      targetPath = "nav/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+
+    val result = addModuleToAppAndNavDependencies(
+      projectDir = tempDir,
+      moduleName = "beta-feature",
+      isKmpProject = true,
+    )
+
+    assertTrue(result, "Should successfully add module")
+    val content = readGeneratedFile("apps/shared/build.gradle.kts")
+    val lines = content.lines()
+
+    // Verify it was added
+    assertGeneratedFileContains(
+      path = "apps/shared/build.gradle.kts",
+      expectedContent = "api(projects.screens.betaFeature)",
+      description = "Apps/shared build file",
+    )
+
+    // Verify alphabetical order
+    val betaIndex = lines.indexOfFirst { it.contains("betaFeature") }
+    val existingIndex = lines.indexOfFirst { it.contains("existingFeature") }
+    assertTrue(
+      betaIndex < existingIndex,
+      "betaFeature should come before existingFeature alphabetically in KMP project",
+    )
+  }
+
+  @Test
+  fun `does not add duplicate module to KMP apps shared`() {
+    tempDir.resolve("apps/shared").mkdirs()
+    tempDir.resolve("nav").mkdirs()
+
+    createFileFromFixture(
+      targetPath = "apps/shared/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+    createFileFromFixture(
+      targetPath = "nav/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+
+    val result = addModuleToAppAndNavDependencies(
+      projectDir = tempDir,
+      moduleName = "existing-feature",
+      isKmpProject = true,
+    )
+
+    assertFalse(result, "Should not add duplicate module")
+    val content = readGeneratedFile("apps/shared/build.gradle.kts")
+    val count = content.split("existingFeature").size - 1
+    assertEquals(
+      expected = 1,
+      actual = count,
+      message = "Should only have one instance of existingFeature in KMP project, but found $count",
+    )
+  }
+
+  @Test
+  fun `handles multiple KMP module additions in alphabetical order`() {
+    tempDir.resolve("apps/shared").mkdirs()
+    tempDir.resolve("nav").mkdirs()
+
+    createFileFromFixture(
+      targetPath = "apps/shared/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+    createFileFromFixture(
+      targetPath = "nav/build.gradle.kts",
+      fixturePath = "fixtures/kmp/with-existing-screens.gradle.kts",
+    )
+
+    addModuleToAppAndNavDependencies(tempDir, "alpha-feature", isKmpProject = true)
+    addModuleToAppAndNavDependencies(tempDir, "beta-feature", isKmpProject = true)
+    addModuleToAppAndNavDependencies(tempDir, "gamma-feature", isKmpProject = true)
+
+    val sharedContent = readGeneratedFile("apps/shared/build.gradle.kts")
+    assertTrue(sharedContent.contains("api(projects.screens.alphaFeature)"))
+    assertTrue(sharedContent.contains("api(projects.screens.betaFeature)"))
+    assertTrue(sharedContent.contains("api(projects.screens.gammaFeature)"))
+    assertTrue(sharedContent.contains("api(projects.screens.existingFeature)"))
   }
 }
