@@ -12,11 +12,16 @@ internal fun createScreensModule(
   shouldIncludeEffects: Boolean,
   shouldGeneratePreview: Boolean,
   shouldGeneratePreviewParameterProvider: Boolean,
+  isKmpProject: Boolean,
 ) {
   val screensDir = File(projectDir, "screens")
   val moduleDir = File(screensDir, moduleName.replace(":", "/")).apply { mkdir() }
-  val mainDir = File(moduleDir, "src" / "main").apply { mkdirs() }
-  val testDir = File(moduleDir, "src" / "test").apply { mkdirs() }
+
+  val mainSourceSetName = if(isKmpProject) "commonMain" else "main"
+  val testSourceSetName = if(isKmpProject) "androidHostTest" else "test"
+
+  val mainDir = File(moduleDir, "src" / mainSourceSetName).apply { mkdirs() }
+  val testDir = File(moduleDir, "src" / testSourceSetName).apply { mkdirs() }
   val packagePath = featurePackage.replace(".", File.separator)
   val mainPackageDir = File(mainDir, "kotlin" / packagePath).apply { mkdirs() }
   val testPackageDir = File(testDir, "kotlin" / packagePath).apply { mkdirs() }
@@ -25,7 +30,94 @@ internal fun createScreensModule(
     if(!exists()) {
       createNewFile()
 
-      writeText(
+      val buildFileContent = if(isKmpProject) {
+        """
+        |import org.gradle.kotlin.dsl.dependencies
+        |
+        |plugins {
+        |  alias(libs.plugins.conventionsAndroidKmpLibrary)
+        |  alias(libs.plugins.conventionsComposeMultiplatform)
+        |  alias(libs.plugins.conventionsDetekt)
+        |  alias(libs.plugins.conventionsKotlinMultiplatform)
+        |  alias(libs.plugins.conventionsProjectCommon)
+        |  alias(libs.plugins.dependencyAnalysis)
+        |  alias(libs.plugins.kotlinxSerialization)
+        |  alias(libs.plugins.ksp)
+        |  alias(libs.plugins.paparazzi)
+        |}
+        |
+        |val pkg = "$featurePackage"
+        |
+        |compose {
+        |  resources {
+        |    packageOfResClass = pkg
+        |  }
+        |}
+        |
+        |kotlin {
+        |  defaultKmpTargets(
+        |    project = project,
+        |    androidNamespace = pkg,
+        |  )
+        |
+        |  androidLibrary {
+        |    androidResources.enable = true
+        |
+        |    withHostTest {
+        |      isIncludeAndroidResources = true
+        |    }
+        |  }
+        |
+        |  kspDependenciesForAllTargets {
+        |    ksp(libs.kotlinInject.anvilCompiler)
+        |  }
+        |
+        |  sourceSets {
+        |    // https://youtrack.jetbrains.com/issue/KT-83321/
+        |    named("androidHostTest").dependencies {
+        |      implementation(projects.testUtils)
+        |      implementation(libs.bundles.test.paparazzi)
+        |    }
+        |
+        |    commonMain.dependencies {
+        |      api(projects.di)
+        |
+        |      implementation(projects.ui.compose)
+        |      implementation(projects.ui.material)
+        |
+        |      api(libs.androidx.navigation3.runtime)
+        |
+        |      implementation(libs.compose.foundation)
+        |      implementation(libs.compose.foundationLayout)
+        |      implementation(libs.compose.material3)
+        |      implementation(libs.compose.nav3.runtime)
+        |      implementation(libs.compose.resources)
+        |      implementation(libs.compose.runtime)
+        |      implementation(libs.compose.runtimeAnnotation)
+        |      implementation(libs.compose.ui)
+        |      implementation(libs.compose.ui.text)
+        |      implementation(libs.compose.uiToolingPreview)
+        |
+        |      implementation(libs.kotlinInject.anvilRuntime)
+        |      implementation(libs.kotlinInject.anvilRuntimeOptional)
+        |      implementation(libs.kotlinInject.runtime)
+        |
+        |      implementation(libs.kotlinx.coroutines.core)
+        |      implementation(libs.kotlinx.serialization.core)
+        |
+        |      implementation(libs.vice.core)
+        |      implementation(libs.vice.nav3)
+        |    }
+        |  }
+        |}
+        |
+        |dependencies {
+        |  androidRuntimeClasspath(libs.compose.uiToolingPreviewIde)
+        |}
+        |
+        """.trimMargin()
+      }
+      else {
         """
         |plugins {
         |  alias(libs.plugins.conventionsAndroidLibrary)
@@ -78,8 +170,10 @@ internal fun createScreensModule(
         |  ksp(libs.kotlinInject.anvilCompiler)
         |}
         |
-        """.trimMargin(),
-      )
+        """.trimMargin()
+      }
+
+      writeText(buildFileContent)
     }
   }
 
@@ -440,8 +534,9 @@ internal fun createScreensModule(
   File(testPackageDir, "${featureName}ScreenshotTest.kt").apply {
     if(!exists()) {
       val screenshotTestImports =
-        listOf(
+        listOfNotNull(
           "app.cash.paparazzi.Paparazzi",
+          if(isKmpProject) "$projectPackage.test.utils.PaparazziComposeResourcesEffect" else null,
           "$projectPackage.test.utils.PaparazziDeviceConfig",
           "$projectPackage.ui.material.theme.${projectName}EdgeToEdgePreviewTheme",
           "com.google.testing.junit.testparameterinjector.TestParameter",
@@ -453,6 +548,11 @@ internal fun createScreensModule(
           .joinToString(separator = "\n") {
             "import $it"
           }
+
+      val cmpResourcesEffect = when {
+        isKmpProject -> "PaparazziComposeResourcesEffect()\n\n          "
+        else -> ""
+      }
 
       createNewFile()
       writeText(
@@ -477,7 +577,7 @@ internal fun createScreensModule(
         |      .values
         |      .forEach { (name, state) ->
         |        paparazzi.snapshot(name = name) {
-        |          ${projectName}EdgeToEdgePreviewTheme(isDarkMode = deviceConfig.isDarkMode) {
+        |          $cmpResourcesEffect${projectName}EdgeToEdgePreviewTheme(isDarkMode = deviceConfig.isDarkMode) {
         |            $viewName(
         |              state = state,
         |              onIntent = {},

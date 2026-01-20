@@ -1,6 +1,7 @@
 package com.example.screens.test
 
 import app.cash.paparazzi.Paparazzi
+import com.example.test.utils.PaparazziComposeResourcesEffect
 import com.example.test.utils.PaparazziDeviceConfig
 import com.example.ui.material.theme.ExampleEdgeToEdgePreviewTheme
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -25,6 +26,8 @@ class TestScreenshotTest(
       .values
       .forEach { (name, state) ->
         paparazzi.snapshot(name = name) {
+          PaparazziComposeResourcesEffect()
+
           ExampleEdgeToEdgePreviewTheme(isDarkMode = deviceConfig.isDarkMode) {
             TestView(
               state = state,
