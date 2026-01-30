@@ -1,7 +1,7 @@
 package com.eygraber.vice.module.generator.lib.internal
 
 import com.eygraber.vice.module.generator.lib.DiFramework
-import com.eygraber.vice.module.generator.lib.internal.generators.ScreensModuleOrchestrator
+import com.eygraber.vice.module.generator.lib.internal.screens.ScreensModuleOrchestrator
 import java.io.File
 
 internal fun createScreensModule(

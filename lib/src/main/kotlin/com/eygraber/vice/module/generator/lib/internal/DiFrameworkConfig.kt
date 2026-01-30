@@ -5,7 +5,7 @@ import com.eygraber.vice.module.generator.lib.DiFramework
 internal sealed class DiFrameworkConfig {
   abstract val injectImport: String
   abstract fun navImports(context: GeneratorContext): List<String>
-  abstract fun navComponentCode(context: GeneratorContext): String
+  abstract fun navDiCode(context: GeneratorContext): String
   abstract fun buildGradleDependencies(isKmpProject: Boolean): String
   abstract fun buildGradlePlugins(isKmpProject: Boolean): String
 
@@ -18,7 +18,7 @@ internal sealed class DiFrameworkConfig {
       "software.amazon.lastmile.kotlin.inject.anvil.SingleIn",
     )
 
-    override fun navComponentCode(context: GeneratorContext): String = """
+    override fun navDiCode(context: GeneratorContext): String = """
     |@ContributesSubcomponent(ScreenScope::class)
     |@SingleIn(ScreenScope::class)
     |interface ${context.componentName} {
@@ -64,18 +64,18 @@ internal sealed class DiFrameworkConfig {
       "dev.zacsweers.metro.SingleIn",
     )
 
-    override fun navComponentCode(context: GeneratorContext): String = """
+    override fun navDiCode(context: GeneratorContext): String = """
     |@GraphExtension(ScreenScope::class)
-    |interface ${context.componentName} {
+    |interface ${context.graphName} {
     |  val navEntryProvider: ${context.navEntryProviderName}
     |
     |  @ContributesTo(NavScope::class)
     |  @GraphExtension.Factory
     |  interface Factory {
-    |    fun create${context.componentName}(
+    |    fun create${context.graphName}(
     |      @Provides navigator: ${context.navigatorName},
     |      @Provides key: ${context.keyName},
-    |    ): ${context.componentName}
+    |    ): ${context.graphName}
     |  }
     |}
     """.trimMargin()

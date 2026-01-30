@@ -3,6 +3,7 @@ package com.eygraber.vice.module.generator.lib
 import com.eygraber.vice.module.generator.lib.internal.addToNav
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class NavTest : TempDirTest() {
@@ -21,6 +22,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should successfully add to nav")
@@ -44,6 +46,7 @@ class NavTest : TempDirTest() {
       featureName = "Alpha",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should successfully add to nav")
@@ -75,6 +78,7 @@ class NavTest : TempDirTest() {
       featureName = "Zulu",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should successfully add to nav")
@@ -106,6 +110,7 @@ class NavTest : TempDirTest() {
       featureName = "Bravo",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should successfully add to nav")
@@ -138,6 +143,7 @@ class NavTest : TempDirTest() {
       featureName = "TestFeature",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navigatorsContent = getNavFile("ExampleNavigators.kt").readText()
@@ -162,6 +168,7 @@ class NavTest : TempDirTest() {
       featureName = "TestFeature",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navContent = getNavFile("ExampleNav.kt").readText()
@@ -190,6 +197,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navContent = getNavFile("ExampleNav.kt").readText()
@@ -218,6 +226,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navContent = getNavFile("ExampleNav.kt").readText()
@@ -250,6 +259,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navContent = getNavFile("ExampleNav.kt").readText()
@@ -278,6 +288,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val testContent = getNavTestFile("ExampleNavigatorsTest.kt").readText()
@@ -313,6 +324,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = true,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should successfully add to nav in KMP project")
@@ -337,6 +349,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = true,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     // Verify files exist in commonMain
@@ -386,6 +399,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = true,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navKeyContent = navKeyFile.readText()
@@ -416,6 +430,7 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = true,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     assertTrue(result, "Should still succeed even if NavKey.kt doesn't exist")
@@ -449,13 +464,15 @@ class NavTest : TempDirTest() {
       featureName = "Test",
       projectPackage = "com.example",
       isKmpProject = false,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navKeyContent = navKeyFile.readText()
     // Should not have been modified
-    assertTrue(
-      navKeyContent == originalContent,
-      "NavKey file should not be modified in non-KMP projects",
+    assertEquals(
+      expected = navKeyContent,
+      actual = originalContent,
+      message = "NavKey file should not be modified in non-KMP projects",
     )
   }
 
@@ -491,6 +508,7 @@ class NavTest : TempDirTest() {
       featureName = "Alpha",
       projectPackage = "com.example",
       isKmpProject = true,
+      diFramework = DiFramework.KotlinInjectAnvil,
     )
 
     val navKeyContent = navKeyFile.readText()
@@ -511,6 +529,177 @@ class NavTest : TempDirTest() {
       alphaSubclassIndex < existingSubclassIndex,
       "AlphaKey subclass should be registered before ExistingKey",
     )
+  }
+
+  // Metro-specific tests
+
+  @Test
+  fun `addToNav Metro - adds feature to empty navigator class`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+    )
+
+    val result = addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    assertTrue(result, "Should successfully add to nav")
+    verifyNavigatorsFileUpdated()
+    verifyNavigatorsTestFileUpdated()
+    verifyNavFileUpdatedForMetro()
+  }
+
+  @Test
+  fun `addToNav Metro - adds correct imports to nav file`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+    )
+
+    addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test.feature",
+      featureName = "TestFeature",
+      projectPackage = "com.example",
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val navContent = getNavFile("ExampleNav.kt").readText()
+    assertTrue(
+      navContent.contains("import com.example.test.feature.TestFeatureGraph"),
+      "Nav file should import the graph (not component)",
+    )
+    assertTrue(
+      navContent.contains("import com.example.test.feature.TestFeatureKey"),
+      "Nav file should import the key",
+    )
+  }
+
+  @Test
+  fun `addToNav Metro - adds factory extension property to nav file`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+    )
+
+    addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val navContent = getNavFile("ExampleNav.kt").readText()
+    assertTrue(
+      navContent.contains("private val ExampleNavGraph.testFactory"),
+      "Nav file should contain factory extension property with Graph",
+    )
+    assertTrue(
+      navContent.contains("get() = this as TestGraph.Factory"),
+      "Factory extension should cast to graph factory",
+    )
+  }
+
+  @Test
+  fun `addToNav Metro - adds provider function to nav file`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+    )
+
+    addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val navContent = getNavFile("ExampleNav.kt").readText()
+    assertTrue(
+      navContent.contains("private fun provideTest("),
+      "Nav file should contain provider function",
+    )
+    assertTrue(
+      navContent.contains("navComponent.testFactory.createTestGraph("),
+      "Provider should call factory method with createTestGraph",
+    )
+    assertTrue(
+      navContent.contains("navigator = ExampleNavigators.test(backStack)"),
+      "Provider should pass navigator from navigators class",
+    )
+  }
+
+  @Test
+  fun `addToNav Metro - adds viceEntry to nav file`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+    )
+
+    addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val navContent = getNavFile("ExampleNav.kt").readText()
+    assertTrue(
+      navContent.contains("viceEntry<TestKey>("),
+      "Nav file should contain viceEntry call",
+    )
+    assertTrue(
+      navContent.contains("provideTest(navComponent, backStack)"),
+      "viceEntry should call provider function",
+    )
+  }
+
+  @Test
+  fun `addToNav Metro KMP - adds feature using commonMain`() {
+    setupNavStructure(
+      navigatorsFixture = "fixtures/nav/empty-navigators.kt",
+      navigatorsTestFixture = "fixtures/nav/empty-navigators-test.kt",
+      navFixture = "fixtures/nav/empty-nav.kt",
+      isKmpProject = true,
+    )
+
+    val result = addToNav(
+      projectDir = tempDir,
+      projectName = "Example",
+      featurePackage = "com.example.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      isKmpProject = true,
+      diFramework = DiFramework.Metro,
+    )
+
+    assertTrue(result, "Should successfully add to nav in KMP project with Metro")
+    verifyKmpNavigatorsFileUpdated()
+    verifyKmpNavigatorsTestFileUpdated()
+    verifyKmpNavFileUpdatedForMetro()
   }
 
   private fun setupNavStructure(
@@ -638,6 +827,70 @@ class NavTest : TempDirTest() {
     assertTrue(
       navContent.contains("private fun provideTest("),
       "KMP Nav file should contain provideTest function",
+    )
+    assertTrue(
+      navContent.contains("viceEntry<TestKey>("),
+      "KMP Nav file should contain viceEntry for TestKey",
+    )
+  }
+
+  private fun verifyNavFileUpdatedForMetro() {
+    val navContent = getNavFile("ExampleNav.kt").readText()
+    assertTrue(
+      navContent.contains("import com.example.test.TestGraph"),
+      "Nav file should import TestGraph",
+    )
+    assertTrue(
+      navContent.contains("import com.example.test.TestKey"),
+      "Nav file should import TestKey",
+    )
+    assertTrue(
+      navContent.contains("private val ExampleNavGraph.testFactory"),
+      "Nav file should contain testFactory property with Graph",
+    )
+    assertTrue(
+      navContent.contains("get() = this as TestGraph.Factory"),
+      "Nav file should cast to TestGraph.Factory",
+    )
+    assertTrue(
+      navContent.contains("private fun provideTest("),
+      "Nav file should contain provideTest function",
+    )
+    assertTrue(
+      navContent.contains("createTestGraph("),
+      "Nav file should call createTestGraph",
+    )
+    assertTrue(
+      navContent.contains("viceEntry<TestKey>("),
+      "Nav file should contain viceEntry for TestKey",
+    )
+  }
+
+  private fun verifyKmpNavFileUpdatedForMetro() {
+    val navContent = getNavFile("ExampleNav.kt", isKmpProject = true).readText()
+    assertTrue(
+      navContent.contains("import com.example.test.TestGraph"),
+      "KMP Nav file should import TestGraph",
+    )
+    assertTrue(
+      navContent.contains("import com.example.test.TestKey"),
+      "KMP Nav file should import TestKey",
+    )
+    assertTrue(
+      navContent.contains("private val ExampleNavGraph.testFactory"),
+      "KMP Nav file should contain testFactory property with Graph",
+    )
+    assertTrue(
+      navContent.contains("get() = this as TestGraph.Factory"),
+      "KMP Nav file should cast to TestGraph.Factory",
+    )
+    assertTrue(
+      navContent.contains("private fun provideTest("),
+      "KMP Nav file should contain provideTest function",
+    )
+    assertTrue(
+      navContent.contains("createTestGraph("),
+      "KMP Nav file should call createTestGraph",
     )
     assertTrue(
       navContent.contains("viceEntry<TestKey>("),

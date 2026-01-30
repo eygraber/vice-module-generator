@@ -83,6 +83,7 @@ public class ModuleGenerator {
       featureName = config.featureName,
       projectPackage = config.projectPackage,
       isKmpProject = config.isKmpProject,
+      diFramework = config.diFramework,
     )
 
     GenerationResult.Success
