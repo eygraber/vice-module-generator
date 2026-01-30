@@ -25,16 +25,16 @@ class TestNavEntryProvider(
 }
 
 @GraphExtension(ScreenScope::class)
-interface TestComponent {
+interface TestGraph {
   val navEntryProvider: TestNavEntryProvider
 
   @ContributesTo(NavScope::class)
   @GraphExtension.Factory
   interface Factory {
-    fun createTestComponent(
+    fun createTestGraph(
       @Provides navigator: TestNavigator,
       @Provides key: TestKey,
-    ): TestComponent
+    ): TestGraph
   }
 }
 

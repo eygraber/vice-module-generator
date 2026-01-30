@@ -17,6 +17,7 @@ internal data class GeneratorContext(
   val componentName: String = "${featureName}Component"
   val compositorName: String = "${featureName}Compositor"
   val effectsName: String = if(shouldIncludeEffects) "${featureName}Effects" else "ViceEffects"
+  val graphName: String = "${featureName}Graph"
   val intentName: String = "${featureName}Intent"
   val keyName: String = "${featureName}Key"
   val navEntryProviderName: String = "${featureName}NavEntryProvider"
