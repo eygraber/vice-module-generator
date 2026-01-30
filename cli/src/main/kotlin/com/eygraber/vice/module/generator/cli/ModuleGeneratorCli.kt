@@ -1,5 +1,6 @@
 package com.eygraber.vice.module.generator.cli
 
+import com.eygraber.vice.module.generator.lib.DiFramework
 import com.eygraber.vice.module.generator.lib.GenerationResult
 import com.eygraber.vice.module.generator.lib.ModuleGenerator
 import com.eygraber.vice.module.generator.lib.ModuleGeneratorConfig
@@ -69,6 +70,8 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
 
   val generator = ModuleGenerator()
 
+  val diFramework = if(options.containsKey("metro")) DiFramework.Metro else DiFramework.KotlinInjectAnvil
+
   val config = ModuleGeneratorConfig(
     projectDir = projectDir,
     projectName = projectName,
@@ -79,6 +82,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
     shouldGeneratePreview = !options.containsKey("no-preview"),
     shouldGeneratePreviewParameterProvider = !options.containsKey("no-preview-provider"),
     isKmpProject = options.containsKey("kmp"),
+    diFramework = diFramework,
   )
 
   println("Generating module with configuration:")
@@ -92,6 +96,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
   println("  Generate Preview: ${config.shouldGeneratePreview}")
   println("  Generate Preview Provider: ${config.shouldGeneratePreviewParameterProvider}")
   println("  KMP/CMP Project: ${config.isKmpProject}")
+  println("  DI Framework: ${config.diFramework}")
   println()
 
   // Validate configuration
@@ -179,6 +184,7 @@ private fun printUsage() {
       --no-preview                      Skip generating Compose preview
       --no-preview-provider             Skip generating preview parameter provider
       --kmp                             Generate for Kotlin/Compose Multiplatform project
+      --metro                           Use Metro DI instead of kotlin-inject-anvil
       --dry-run                         Dry run, no files will be generated
       --help, -h                        Show this help message
 
@@ -194,6 +200,9 @@ private fun printUsage() {
 
       # Generate for KMP/CMP project
       ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --kmp"
+
+      # Generate with Metro DI
+      ./gradlew :cli:run --args="--project-name=MyApp --project-package=com.example --feature=CoolFeature --metro"
     """.trimIndent(),
   )
 }

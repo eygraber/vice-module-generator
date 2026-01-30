@@ -7,6 +7,14 @@ import com.eygraber.vice.module.generator.lib.internal.createScreensModule
 import java.io.File
 
 /**
+ * Supported DI frameworks for code generation.
+ */
+public enum class DiFramework {
+  KotlinInjectAnvil,
+  Metro,
+}
+
+/**
  * Configuration for generating a screen module.
  */
 public data class ModuleGeneratorConfig(
@@ -19,6 +27,7 @@ public data class ModuleGeneratorConfig(
   val shouldGeneratePreview: Boolean = true,
   val shouldGeneratePreviewParameterProvider: Boolean = true,
   val isKmpProject: Boolean = false,
+  val diFramework: DiFramework = DiFramework.KotlinInjectAnvil,
 ) {
   val featurePackage: String = overridingFeaturePackage
     ?: "$projectPackage.screens.${NameInference.inferPackageName(featureName)}"
@@ -53,6 +62,7 @@ public class ModuleGenerator {
       shouldGeneratePreview = config.shouldGeneratePreview,
       shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       isKmpProject = config.isKmpProject,
+      diFramework = config.diFramework,
     )
 
     addModuleToSettings(
