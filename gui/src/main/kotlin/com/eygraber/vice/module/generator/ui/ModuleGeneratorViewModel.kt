@@ -227,7 +227,7 @@ internal class ModuleGeneratorViewModel(
             progressText = "Running ./gradlew $gradleTask"
           },
           config = config,
-          recordTask = "recordPaparazziDevDebug",
+          recordTask = "recordPaparazziDebug",
         )
       }.getOrElse { error ->
         progressText = "Generation failed: ${error.message}"
