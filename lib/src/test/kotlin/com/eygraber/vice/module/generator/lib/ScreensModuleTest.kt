@@ -3,6 +3,7 @@ package com.eygraber.vice.module.generator.lib
 import com.eygraber.vice.module.generator.lib.internal.createScreensModule
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -515,5 +516,237 @@ class ScreensModuleTest : TempDirTest() {
       generated = generatedTestFile,
       description = "Android TestScreenshotTest.kt",
     )
+  }
+
+  @Test
+  fun `generates Metro Android module with correct build file`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
+    val fixtureBuildFile = getFixtureFile("fixtures/basic-metro/build.gradle.kts")
+
+    assertFileContentMatches(
+      fixture = fixtureBuildFile,
+      generated = generatedBuildFile,
+      description = "Metro Android build.gradle.kts",
+    )
+  }
+
+  @Test
+  fun `generates Metro Android module without kotlin-inject dependencies`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val buildContent = tempDir.resolve("screens/test-feature/build.gradle.kts").readText()
+
+    // Verify Metro plugin is used
+    assertContains(charSequence = buildContent, other = "libs.plugins.metro")
+
+    // Verify no kotlin-inject dependencies
+    assertFalse(buildContent.contains("kotlinInject"), "Metro build should not have kotlin-inject dependencies")
+    assertFalse(buildContent.contains("ksp("), "Metro build should not have ksp configuration")
+  }
+
+  @Test
+  fun `generates Metro Nav file with correct imports and annotations`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedNavFile = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/screens/test/TestNav.kt")
+    val fixtureNavFile = getFixtureFile("fixtures/basic-metro/TestNav.kt")
+
+    assertFileContentMatches(
+      fixture = fixtureNavFile,
+      generated = generatedNavFile,
+      description = "Metro TestNav.kt",
+    )
+  }
+
+  @Test
+  fun `generates Metro Compositor file with correct import`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedCompositorFile = tempDir.resolve(
+      "screens/test-feature/src/main/kotlin/com/example/screens/test/TestCompositor.kt",
+    )
+    val fixtureCompositorFile = getFixtureFile("fixtures/basic-metro/TestCompositor.kt")
+
+    assertFileContentMatches(
+      fixture = fixtureCompositorFile,
+      generated = generatedCompositorFile,
+      description = "Metro TestCompositor.kt",
+    )
+  }
+
+  @Test
+  fun `generates Metro module with effects using correct import`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = true,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedEffectsFile = tempDir.resolve(
+      "screens/test-feature/src/main/kotlin/com/example/screens/test/TestEffects.kt",
+    )
+    val fixtureEffectsFile = getFixtureFile("fixtures/with-effects-metro/TestEffects.kt")
+
+    assertFileContentMatches(
+      fixture = fixtureEffectsFile,
+      generated = generatedEffectsFile,
+      description = "Metro TestEffects.kt",
+    )
+  }
+
+  @Test
+  fun `generates Metro Nav file with effects`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = true,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = false,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedNavFile = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/screens/test/TestNav.kt")
+    val fixtureNavFile = getFixtureFile("fixtures/with-effects-metro/TestNav.kt")
+
+    assertFileContentMatches(
+      fixture = fixtureNavFile,
+      generated = generatedNavFile,
+      description = "Metro TestNav.kt with effects",
+    )
+  }
+
+  @Test
+  fun `generates Metro KMP module with correct build file`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = true,
+      diFramework = DiFramework.Metro,
+    )
+
+    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
+    val fixtureBuildFile = getFixtureFile("fixtures/kmp-metro/build.gradle.kts")
+
+    assertFileContentMatches(
+      fixture = fixtureBuildFile,
+      generated = generatedBuildFile,
+      description = "Metro KMP build.gradle.kts",
+    )
+  }
+
+  @Test
+  fun `generates Metro KMP module without kspDependenciesForAllTargets`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = "test-feature",
+      featurePackage = "com.example.screens.test",
+      featureName = "Test",
+      projectPackage = "com.example",
+      shouldIncludeEffects = false,
+      shouldGeneratePreview = true,
+      shouldGeneratePreviewParameterProvider = true,
+      isKmpProject = true,
+      diFramework = DiFramework.Metro,
+    )
+
+    val buildContent = tempDir.resolve("screens/test-feature/build.gradle.kts").readText()
+
+    // Verify Metro plugin is used
+    assertContains(charSequence = buildContent, other = "libs.plugins.metro")
+
+    // Verify no kotlin-inject dependencies
+    assertFalse(buildContent.contains("kotlinInject"), "Metro KMP build should not have kotlin-inject dependencies")
+    assertFalse(
+      buildContent.contains("kspDependenciesForAllTargets"),
+      "Metro KMP build should not have kspDependenciesForAllTargets",
+    )
+    assertFalse(buildContent.contains("libs.plugins.ksp"), "Metro KMP build should not have ksp plugin")
   }
 }

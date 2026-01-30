@@ -4,6 +4,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.eygraber.vice.module.generator.lib.DiFramework
 import com.eygraber.vice.module.generator.lib.GenerationResult
 import com.eygraber.vice.module.generator.lib.ModuleGenerator
 import com.eygraber.vice.module.generator.lib.ModuleGeneratorConfig
@@ -37,6 +38,7 @@ internal class ModuleGeneratorViewModel(
   var shouldInferPackageName by mutableStateOf(packageNamePrefix.isNotBlank())
   var shouldGeneratePreview by mutableStateOf(true)
   var isKmpProject by mutableStateOf(false)
+  var isMetroProject by mutableStateOf(false)
 
   private var shouldGeneratePreviewParameterProviderInternal by mutableStateOf(true)
   val shouldGeneratePreviewParameterProvider by derivedStateOf {
@@ -69,6 +71,10 @@ internal class ModuleGeneratorViewModel(
 
   fun onIsKmpProjectChange(newValue: Boolean) {
     isKmpProject = newValue
+  }
+
+  fun onUseMetroChange(newValue: Boolean) {
+    isMetroProject = newValue
   }
 
   fun onInferPackageNameChange(newValue: Boolean) {
@@ -200,6 +206,7 @@ internal class ModuleGeneratorViewModel(
         shouldGeneratePreview = shouldGeneratePreview,
         shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProviderInternal,
         isKmpProject = isKmpProject,
+        diFramework = if(isMetroProject) DiFramework.Metro else DiFramework.KotlinInjectAnvil,
       )
 
       val validationResult = generator.validate(config)

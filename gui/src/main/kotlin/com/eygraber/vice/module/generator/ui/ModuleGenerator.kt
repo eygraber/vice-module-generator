@@ -110,6 +110,12 @@ private fun Generator(viewModel: ModuleGeneratorViewModel) {
       onCheckedChange = viewModel::onIsKmpProjectChange,
     )
 
+    GeneratorCheckbox(
+      isChecked = viewModel.isMetroProject,
+      title = "Metro DI",
+      onCheckedChange = viewModel::onUseMetroChange,
+    )
+
     Row {
       GeneratorCheckbox(
         isChecked = viewModel.shouldInferPackageName,
