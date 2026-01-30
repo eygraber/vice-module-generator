@@ -34,7 +34,7 @@ val result = generator.generate(config)
 
 **Maven Coordinates**:
 ```kotlin
-implementation("com.eygraber:vice-module-generator-lib:0.1.2")
+implementation("com.eygraber:vice-module-generator-lib:0.1.3")
 ```
 
 ### 🖥️ GUI (`gui`)
@@ -47,8 +47,8 @@ Interactive Compose Desktop application for module generation.
 
 **Download executable JAR**:
 ```bash
-wget https://repo1.maven.org/maven2/com/eygraber/vice-module-generator-gui/0.1.2/vice-module-generator-gui-0.1.2.jar
-java -jar vice-module-generator-gui-0.1.2.jar MyApp com.example
+wget https://repo1.maven.org/maven2/com/eygraber/vice-module-generator-gui/0.1.3/vice-module-generator-gui-0.1.3.jar
+java -jar vice-module-generator-gui-0.1.3.jar MyApp com.example
 ```
 
 **Arguments**:
@@ -65,8 +65,8 @@ Command-line interface for scripting and automation.
 
 **Download executable JAR**:
 ```bash
-wget https://repo1.maven.org/maven2/com/eygraber/vice-module-generator-cli/0.1.2/vice-module-generator-cli-0.1.2.jar
-java -jar vice-module-generator-cli-0.1.2.jar --project-name=MyApp --project-package=com.example --feature=CoolFeature
+wget https://repo1.maven.org/maven2/com/eygraber/vice-module-generator-cli/0.1.3/vice-module-generator-cli-0.1.3.jar
+java -jar vice-module-generator-cli-0.1.3.jar --project-name=MyApp --project-package=com.example --feature=CoolFeature
 ```
 
 **Required Arguments**:
@@ -90,7 +90,7 @@ Add the dependency to your build automation or Gradle plugin:
 
 ```kotlin
 dependencies {
-  implementation("com.eygraber:vice-module-generator-lib:0.1.2")
+  implementation("com.eygraber:vice-module-generator-lib:0.1.3")
 }
 ```
 
@@ -169,7 +169,7 @@ For projects that want to use the published JARs without adding dependencies, cr
 
 PROJECT_NAME="MyApp"
 PROJECT_PACKAGE="com.example"
-VERSION="0.1.2"
+VERSION="0.1.3"
 JAR_NAME="vice-module-generator-cli-$VERSION.jar"
 CACHE_DIR="$HOME/.vice-module-generator"
 JAR_PATH="$CACHE_DIR/$JAR_NAME"
@@ -204,7 +204,7 @@ Use it:
 
 PROJECT_NAME="MyApp"
 PROJECT_PACKAGE="com.example"
-VERSION="0.1.2"
+VERSION="0.1.3"
 JAR_NAME="vice-module-generator-gui-$VERSION.jar"
 CACHE_DIR="$HOME/.vice-module-generator"
 JAR_PATH="$CACHE_DIR/$JAR_NAME"
