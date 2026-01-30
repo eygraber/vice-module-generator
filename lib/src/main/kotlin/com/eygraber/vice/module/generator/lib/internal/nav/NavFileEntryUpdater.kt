@@ -37,10 +37,10 @@ internal object NavFileEntryUpdater {
     val providerCall =
       """
       |private fun provide${context.featureName}(
-      |  navComponent: ${context.navDiComponentName},
+      |  nav${context.diComponentName}: ${context.navDiComponentName},
       |  backStack: NavBackStack<NavKey>,
       |) = { key: ${context.key} ->
-      |  navComponent.${context.featureCall}Factory.create${context.diComponent}(
+      |  nav${context.diComponentName}.${context.featureCall}Factory.create${context.diComponent}(
       |    navigator = ${context.navigatorsName}.${context.featureCall}(backStack),
       |    key = key,
       |  ).navEntryProvider
@@ -57,7 +57,7 @@ internal object NavFileEntryUpdater {
     val entryCall =
       """
       |  viceEntry<${context.key}>(
-      |    provide${context.featureName}(navComponent, backStack),
+      |    provide${context.featureName}(nav${context.diComponentName}, backStack),
       |  )
       """.trimMargin()
 
