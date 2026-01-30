@@ -639,7 +639,7 @@ class NavTest : TempDirTest() {
       "Nav file should contain provider function",
     )
     assertTrue(
-      navContent.contains("navComponent.testFactory.createTestGraph("),
+      navContent.contains("navGraph.testFactory.createTestGraph("),
       "Provider should call factory method with createTestGraph",
     )
     assertTrue(
@@ -672,7 +672,7 @@ class NavTest : TempDirTest() {
       "Nav file should contain viceEntry call",
     )
     assertTrue(
-      navContent.contains("provideTest(navComponent, backStack)"),
+      navContent.contains("provideTest(navGraph, backStack)"),
       "viceEntry should call provider function",
     )
   }
