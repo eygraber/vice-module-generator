@@ -135,7 +135,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
         println("About to run task: $gradleTask")
       },
       config = config,
-      recordTask = "recordPaparazziDevDebug",
+      recordTask = "recordPaparazziDebug",
     )
 
     0
