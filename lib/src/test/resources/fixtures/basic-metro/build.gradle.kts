@@ -34,8 +34,6 @@ dependencies {
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.kotlinx.serialization.core)
 
-  implementation(libs.metro.runtime)
-
   implementation(libs.vice.core)
   implementation(libs.vice.nav3)
 
