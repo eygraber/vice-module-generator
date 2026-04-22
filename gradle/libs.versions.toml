@@ -1,5 +1,5 @@
 [versions]
-compose = "1.10.6"
+compose = "1.11.0"
 composeJetbrains = "1.10.3"
 composeJetbrainsMaterial3 = "1.9.0"
 
