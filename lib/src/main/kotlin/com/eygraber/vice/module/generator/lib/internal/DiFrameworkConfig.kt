@@ -2,14 +2,14 @@ package com.eygraber.vice.module.generator.lib.internal
 
 import com.eygraber.vice.module.generator.lib.DiFramework
 
-internal sealed class DiFrameworkConfig {
-  abstract val injectImport: String
-  abstract fun navImports(context: GeneratorContext): List<String>
-  abstract fun navDiCode(context: GeneratorContext): String
-  abstract fun buildGradleDependencies(isKmpProject: Boolean): String
-  abstract fun buildGradlePlugins(isKmpProject: Boolean): String
+internal sealed interface DiFrameworkConfig {
+  val injectImport: String
+  fun navImports(context: GeneratorContext): List<String>
+  fun navDiCode(context: GeneratorContext): String
+  fun buildGradleDependencies(isKmpProject: Boolean): String
+  fun buildGradlePlugins(isKmpProject: Boolean): String
 
-  data object KotlinInjectAnvil : DiFrameworkConfig() {
+  data object KotlinInjectAnvil : DiFrameworkConfig {
     override val injectImport: String = "me.tatarka.inject.annotations.Inject"
 
     override fun navImports(context: GeneratorContext): List<String> = listOf(
@@ -53,7 +53,7 @@ internal sealed class DiFrameworkConfig {
       "|  alias(libs.plugins.ksp)"
   }
 
-  data object Metro : DiFrameworkConfig() {
+  data object Metro : DiFrameworkConfig {
     override val injectImport: String = "dev.zacsweers.metro.Inject"
 
     override fun navImports(context: GeneratorContext): List<String> = listOf(
