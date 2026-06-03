@@ -13,6 +13,7 @@ dependencies {
   implementation(projects.lib)
 
   testImplementation(kotlin("test"))
+  testImplementation(libs.test.kotlin.junit)
 }
 
 application {
