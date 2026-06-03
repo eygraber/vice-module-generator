@@ -36,6 +36,8 @@ buildscript-compose-jetbrains = { module = "org.jetbrains.compose:compose-gradle
 buildscript-detekt = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 buildscript-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 buildscript-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+# forces the kotlin-metadata-jvm version used by the dependency-analysis plugin to support newer Kotlin metadata
+buildscript-kotlinMetadataJvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
 buildscript-publish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "publish" }
 
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "composeJetbrains" }
@@ -63,3 +65,4 @@ ktlint = { module = "com.pinterest.ktlint:ktlint-bom", version.ref = "ktlint" }
 ktlintCustomRules = { module = "com.eygraber.ktlint.rules:ktlint-rules", version.ref = "ktlintCustomRules" }
 
 test-junit = "junit:junit:4.13.2"
+test-kotlin-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
