@@ -27,7 +27,7 @@ conventionsDetekt = { id = "com.eygraber.conventions-detekt2" }
 conventionsKotlin = { id = "com.eygraber.conventions-kotlin-library" }
 conventionsPublish = { id = "com.eygraber.conventions-publish-maven-central" }
 dependencyAnalysis = { id = "com.autonomousapps.dependency-analysis" }
-dependencyAnalysisRoot = { id = "com.autonomousapps.dependency-analysis", version = "3.14.1" }
+dependencyAnalysisRoot = { id = "com.autonomousapps.dependency-analysis", version = "3.15.0" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm" }
 
 [libraries]
