@@ -24,7 +24,7 @@ internal object EffectsGenerator : FileGenerator {
     |$imports
     |
     |@Inject
-    |class ${context.effectsName} : ViceEffects {
+    |internal class ${context.effectsName} : ViceEffects {
     |  override fun CoroutineScope.runEffects() {}
     |}
     |

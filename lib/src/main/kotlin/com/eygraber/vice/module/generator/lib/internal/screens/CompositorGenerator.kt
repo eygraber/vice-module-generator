@@ -22,7 +22,7 @@ internal object CompositorGenerator : FileGenerator {
     |$imports
     |
     |@Inject
-    |class ${context.compositorName} : ViceCompositor<${context.intentName}, ${context.viewStateName}> {
+    |internal class ${context.compositorName} : ViceCompositor<${context.intentName}, ${context.viewStateName}> {
     |  @Composable
     |  override fun composite() = ${context.viewStateName}
     |

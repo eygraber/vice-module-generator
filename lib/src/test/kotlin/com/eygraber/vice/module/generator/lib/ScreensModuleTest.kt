@@ -12,37 +12,31 @@ class ScreensModuleTest : TempDirTest() {
   fun `generates basic module with preview parameter provider`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
+    createModule()
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
 
     // Verify all expected files exist
-    assertFileExists(tempDir.resolve("screens/test-feature/build.gradle.kts"), "build.gradle.kts")
-    assertFileExists(tempDir.resolve("screens/test-feature/consumer-rules.pro"), "consumer-rules.pro")
-    assertFileExists(File(generatedModuleDir, "TestNav.kt"), "TestNav.kt")
-    assertFileExists(File(generatedModuleDir, "TestNavigator.kt"), "TestNavigator.kt")
-    assertFileExists(File(generatedModuleDir, "TestCompositor.kt"), "TestCompositor.kt")
-    assertFileExists(File(generatedModuleDir, "TestIntent.kt"), "TestIntent.kt")
-    assertFileExists(File(generatedModuleDir, "TestViewState.kt"), "TestViewState.kt")
-    assertFileExists(File(generatedModuleDir, "TestView.kt"), "TestView.kt")
-    assertFileExists(File(generatedModuleDir, "TestViewStatePreviewProvider.kt"), "TestViewStatePreviewProvider.kt")
+    assertFileExists(tempDir.resolve("screens/test-feature/public/build.gradle.kts"), "public build.gradle.kts")
+    assertFileExists(
+      tempDir.resolve("screens/test-feature/public/src/main/kotlin/com/example/test/TestKey.kt"),
+      "TestKey.kt",
+    )
+    assertFileExists(tempDir.resolve("screens/test-feature/impl/build.gradle.kts"), "impl build.gradle.kts")
+    assertFileExists(File(implSrcDir, "TestNav.kt"), "TestNav.kt")
+    assertFileExists(File(implSrcDir, "TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
+    assertFileExists(File(implSrcDir, "TestNavigator.kt"), "TestNavigator.kt")
+    assertFileExists(File(implSrcDir, "TestCompositor.kt"), "TestCompositor.kt")
+    assertFileExists(File(implSrcDir, "TestIntent.kt"), "TestIntent.kt")
+    assertFileExists(File(implSrcDir, "TestViewState.kt"), "TestViewState.kt")
+    assertFileExists(File(implSrcDir, "TestView.kt"), "TestView.kt")
+    assertFileExists(File(implSrcDir, "TestViewStatePreviewProvider.kt"), "TestViewStatePreviewProvider.kt")
 
-    val generatedTestDir = tempDir.resolve("screens/test-feature/src/test/kotlin/com/example/test")
-    assertFileExists(File(generatedTestDir, "TestScreenshotTest.kt"), "TestScreenshotTest.kt")
+    val implTestDir = tempDir.resolve("screens/test-feature/impl/src/test/kotlin/com/example/test")
+    assertFileExists(File(implTestDir, "TestScreenshotTest.kt"), "TestScreenshotTest.kt")
 
     // Verify preview provider file contains expected content
-    val previewProviderContent = File(generatedModuleDir, "TestViewStatePreviewProvider.kt").readText()
+    val previewProviderContent = File(implSrcDir, "TestViewStatePreviewProvider.kt").readText()
     assertTrue(
       previewProviderContent.contains("TestViewStatePreviewProvider"),
       "Preview provider should contain class name",
@@ -54,26 +48,53 @@ class ScreensModuleTest : TempDirTest() {
   }
 
   @Test
+  fun `generates key in the public module`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createModule()
+
+    val keyContent = tempDir
+      .resolve("screens/test-feature/public/src/main/kotlin/com/example/test/TestKey.kt")
+      .readText()
+
+    assertContains(charSequence = keyContent, other = "@Serializable")
+    assertContains(charSequence = keyContent, other = "data object TestKey : NavKey")
+
+    // The key must not also be declared in the impl module
+    val navContent = tempDir
+      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/TestNav.kt")
+      .readText()
+    assertFalse(
+      navContent.contains("data object TestKey"),
+      "The key should only be declared in the public module",
+    )
+  }
+
+  @Test
+  fun `generates nav entry registrar that contributes into NavScope`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createModule(diFramework = DiFramework.Metro)
+
+    val registrarContent = tempDir
+      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/TestNavEntryRegistrar.kt")
+      .readText()
+
+    assertContains(charSequence = registrarContent, other = "@ContributesIntoSet(NavScope::class)")
+    assertContains(charSequence = registrarContent, other = "ViceNavEntryRegistrar")
+    assertContains(charSequence = registrarContent, other = "viceEntry<TestKey>")
+  }
+
+  @Test
   fun `generates module with effects`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = true,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
+    createModule(shouldIncludeEffects = true)
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
 
     // Verify effects file exists
-    val effectsFile = File(generatedModuleDir, "TestEffects.kt")
+    val effectsFile = File(implSrcDir, "TestEffects.kt")
     assertFileExists(effectsFile, "TestEffects.kt")
 
     // Verify effects file content
@@ -82,7 +103,7 @@ class ScreensModuleTest : TempDirTest() {
     assertTrue(effectsContent.contains("ViceEffects"), "Effects should implement ViceEffects")
 
     // Verify nav file references effects
-    val navContent = File(generatedModuleDir, "TestNav.kt").readText()
+    val navContent = File(implSrcDir, "TestNav.kt").readText()
     assertTrue(navContent.contains("override val effects: TestEffects"), "Nav should reference TestEffects")
   }
 
@@ -90,25 +111,14 @@ class ScreensModuleTest : TempDirTest() {
   fun `generates module without preview parameter provider`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = false,
-      isKmpProject = false,
-    )
+    createModule(shouldGeneratePreviewParameterProvider = false)
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
-    val previewProviderFile = File(generatedModuleDir, "TestViewStatePreviewProvider.kt")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
+    val previewProviderFile = File(implSrcDir, "TestViewStatePreviewProvider.kt")
     assertFalse(previewProviderFile.exists(), "TestViewStatePreviewProvider.kt should not exist")
 
     // Verify view has preview but no PreviewParameter
-    val viewContent = File(generatedModuleDir, "TestView.kt").readText()
+    val viewContent = File(implSrcDir, "TestView.kt").readText()
     assertTrue(viewContent.contains("@Preview"), "View should have preview annotation")
     assertFalse(
       viewContent.contains("@PreviewParameter"),
@@ -120,25 +130,17 @@ class ScreensModuleTest : TempDirTest() {
   fun `generates module without preview`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
+    createModule(
       shouldGeneratePreview = false,
       shouldGeneratePreviewParameterProvider = false,
-      isKmpProject = false,
     )
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
-    val previewProviderFile = File(generatedModuleDir, "TestViewStatePreviewProvider.kt")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
+    val previewProviderFile = File(implSrcDir, "TestViewStatePreviewProvider.kt")
     assertFalse(previewProviderFile.exists(), "TestViewStatePreviewProvider.kt should not exist")
 
     // Verify view has no preview
-    val viewContent = File(generatedModuleDir, "TestView.kt").readText()
+    val viewContent = File(implSrcDir, "TestView.kt").readText()
     assertFalse(viewContent.contains("@Preview"), "View should not have preview annotation")
   }
 
@@ -146,194 +148,116 @@ class ScreensModuleTest : TempDirTest() {
   fun `creates correct directory structure`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
+    createModule(
       featurePackage = "com.example.test.feature",
       featureName = "TestFeature",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
     )
 
     val moduleDir = tempDir.resolve("screens/test-feature")
     assertTrue(moduleDir.exists(), "Module directory should exist")
-    assertTrue(moduleDir.resolve("build.gradle.kts").exists(), "build.gradle.kts should exist")
-    assertTrue(moduleDir.resolve("consumer-rules.pro").exists(), "consumer-rules.pro should exist")
+    assertTrue(moduleDir.resolve("public/build.gradle.kts").exists(), "public build.gradle.kts should exist")
+    assertTrue(moduleDir.resolve("impl/build.gradle.kts").exists(), "impl build.gradle.kts should exist")
 
-    val srcMainDir = moduleDir.resolve("src/main/kotlin/com/example/test/feature")
-    assertTrue(srcMainDir.exists(), "Main source directory should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureNav.kt").exists(), "Nav file should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureNavigator.kt").exists(), "Navigator file should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureCompositor.kt").exists(), "Compositor file should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureIntent.kt").exists(), "Intent file should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureView.kt").exists(), "View file should exist")
-    assertTrue(srcMainDir.resolve("TestFeatureViewState.kt").exists(), "ViewState file should exist")
+    val publicSrcDir = moduleDir.resolve("public/src/main/kotlin/com/example/test/feature")
+    assertTrue(publicSrcDir.exists(), "Public source directory should exist")
+    assertTrue(publicSrcDir.resolve("TestFeatureKey.kt").exists(), "Key file should exist")
+
+    val implSrcDir = moduleDir.resolve("impl/src/main/kotlin/com/example/test/feature")
+    assertTrue(implSrcDir.exists(), "Impl source directory should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureNav.kt").exists(), "Nav file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureNavEntryRegistrar.kt").exists(), "Registrar file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureNavigator.kt").exists(), "Navigator file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureCompositor.kt").exists(), "Compositor file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureIntent.kt").exists(), "Intent file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureView.kt").exists(), "View file should exist")
+    assertTrue(implSrcDir.resolve("TestFeatureViewState.kt").exists(), "ViewState file should exist")
     assertTrue(
-      srcMainDir.resolve("TestFeatureViewStatePreviewProvider.kt").exists(),
+      implSrcDir.resolve("TestFeatureViewStatePreviewProvider.kt").exists(),
       "Preview provider file should exist",
     )
 
-    val srcTestDir = moduleDir.resolve("src/test/kotlin/com/example/test/feature")
-    assertTrue(srcTestDir.exists(), "Test source directory should exist")
-    assertTrue(srcTestDir.resolve("TestFeatureScreenshotTest.kt").exists(), "Screenshot test file should exist")
+    val implTestDir = moduleDir.resolve("impl/src/test/kotlin/com/example/test/feature")
+    assertTrue(implTestDir.exists(), "Test source directory should exist")
+    assertTrue(implTestDir.resolve("TestFeatureScreenshotTest.kt").exists(), "Screenshot test file should exist")
   }
 
   @Test
   fun `does not create effects file when not requested`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
+    createModule()
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
-    val effectsFile = File(generatedModuleDir, "TestEffects.kt")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
+    val effectsFile = File(implSrcDir, "TestEffects.kt")
     assertFalse(effectsFile.exists(), "TestEffects.kt should not exist when effects not requested")
-  }
-
-  @Test
-  fun `creates effects file when requested`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = true,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
-
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/test")
-    val effectsFile = File(generatedModuleDir, "TestEffects.kt")
-    assertTrue(effectsFile.exists(), "TestEffects.kt should exist when effects requested")
   }
 
   @Test
   fun `handles nested module names with colons`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "category:test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
+    createModule(moduleName = "category:test-feature")
 
     val moduleDir = tempDir.resolve("screens/category/test-feature")
     assertTrue(moduleDir.exists(), "Nested module directory should exist")
-    assertTrue(moduleDir.resolve("build.gradle.kts").exists(), "build.gradle.kts should exist")
+    assertTrue(moduleDir.resolve("public/build.gradle.kts").exists(), "public build.gradle.kts should exist")
+    assertTrue(moduleDir.resolve("impl/build.gradle.kts").exists(), "impl build.gradle.kts should exist")
+
+    val implBuildContent = moduleDir.resolve("impl/build.gradle.kts").readText()
+    assertContains(
+      charSequence = implBuildContent,
+      other = "api(projects.screens.category.testFeature.public)",
+    )
+  }
+
+  @Test
+  fun `uses custom test utils module path`() {
+    tempDir.resolve("screens").mkdirs()
+
+    createModule(testUtilsModulePath = ":utils:test")
+
+    val implBuildContent = tempDir.resolve("screens/test-feature/impl/build.gradle.kts").readText()
+    assertContains(charSequence = implBuildContent, other = "testImplementation(projects.utils.test)")
+
+    val testContent = tempDir
+      .resolve("screens/test-feature/impl/src/test/kotlin/com/example/test/TestScreenshotTest.kt")
+      .readText()
+    assertContains(charSequence = testContent, other = "import com.example.utils.test.PaparazziDeviceConfig")
   }
 
   @Test
   fun `generates KMP module with correct source sets`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
+    createModule(isKmpProject = true)
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/commonMain/kotlin/com/example/test")
-    val generatedTestDir = tempDir.resolve("screens/test-feature/src/androidHostTest/kotlin/com/example/test")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/commonMain/kotlin/com/example/test")
+    val implTestDir = tempDir.resolve("screens/test-feature/impl/src/androidHostTest/kotlin/com/example/test")
+    val publicSrcDir = tempDir.resolve("screens/test-feature/public/src/commonMain/kotlin/com/example/test")
 
     // Verify all expected files exist in commonMain
-    assertFileExists(File(generatedModuleDir, "TestNav.kt"), "TestNav.kt")
-    assertFileExists(File(generatedModuleDir, "TestNavigator.kt"), "TestNavigator.kt")
-    assertFileExists(File(generatedModuleDir, "TestCompositor.kt"), "TestCompositor.kt")
-    assertFileExists(File(generatedModuleDir, "TestIntent.kt"), "TestIntent.kt")
-    assertFileExists(File(generatedModuleDir, "TestViewState.kt"), "TestViewState.kt")
-    assertFileExists(File(generatedModuleDir, "TestView.kt"), "TestView.kt")
-    assertFileExists(File(generatedModuleDir, "TestViewStatePreviewProvider.kt"), "TestViewStatePreviewProvider.kt")
+    assertFileExists(File(publicSrcDir, "TestKey.kt"), "TestKey.kt")
+    assertFileExists(File(implSrcDir, "TestNav.kt"), "TestNav.kt")
+    assertFileExists(File(implSrcDir, "TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
+    assertFileExists(File(implSrcDir, "TestNavigator.kt"), "TestNavigator.kt")
+    assertFileExists(File(implSrcDir, "TestCompositor.kt"), "TestCompositor.kt")
+    assertFileExists(File(implSrcDir, "TestIntent.kt"), "TestIntent.kt")
+    assertFileExists(File(implSrcDir, "TestViewState.kt"), "TestViewState.kt")
+    assertFileExists(File(implSrcDir, "TestView.kt"), "TestView.kt")
+    assertFileExists(File(implSrcDir, "TestViewStatePreviewProvider.kt"), "TestViewStatePreviewProvider.kt")
 
     // Verify test file exists in androidHostTest
-    assertFileExists(File(generatedTestDir, "TestScreenshotTest.kt"), "TestScreenshotTest.kt")
-  }
-
-  @Test
-  fun `generates KMP module with correct build file content`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
-
-    val buildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
-    val buildContent = buildFile.readText()
-
-    // Verify KMP-specific plugins
-    assertTrue(buildContent.contains("conventionsAndroidKmpLibrary"), "Should use Android KMP library plugin")
-    assertTrue(buildContent.contains("conventionsComposeMultiplatform"), "Should use Compose Multiplatform plugin")
-    assertTrue(buildContent.contains("conventionsKotlinMultiplatform"), "Should use Kotlin Multiplatform plugin")
-
-    // Verify KMP-specific configuration
-    assertTrue(buildContent.contains("kotlin {"), "Should have kotlin block")
-    assertTrue(buildContent.contains("defaultKmpTargets"), "Should configure default KMP targets")
-    assertTrue(buildContent.contains("androidLibrary"), "Should configure Android library")
-    assertTrue(buildContent.contains("withHostTest"), "Should configure host test")
-    assertTrue(buildContent.contains("commonMain.dependencies"), "Should have commonMain dependencies")
-    assertTrue(buildContent.contains("androidHostTest"), "Should have androidHostTest dependencies")
+    assertFileExists(File(implTestDir, "TestScreenshotTest.kt"), "TestScreenshotTest.kt")
   }
 
   @Test
   fun `generates KMP module screenshot test with PaparazziComposeResourcesEffect`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
+    createModule(isKmpProject = true)
 
     val testFile = tempDir.resolve(
-      "screens/test-feature/src/androidHostTest/kotlin/com/example/test/TestScreenshotTest.kt",
+      "screens/test-feature/impl/src/androidHostTest/kotlin/com/example/test/TestScreenshotTest.kt",
     )
     val testContent = testFile.readText()
 
@@ -354,20 +278,11 @@ class ScreensModuleTest : TempDirTest() {
   fun `generates Android module without PaparazziComposeResourcesEffect`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
+    createModule()
 
-    val testFile = tempDir.resolve("screens/test-feature/src/test/kotlin/com/example/test/TestScreenshotTest.kt")
+    val testFile = tempDir.resolve(
+      "screens/test-feature/impl/src/test/kotlin/com/example/test/TestScreenshotTest.kt",
+    )
     val testContent = testFile.readText()
 
     // Verify no KMP-specific imports
@@ -381,23 +296,15 @@ class ScreensModuleTest : TempDirTest() {
   fun `generates KMP module with effects`() {
     tempDir.resolve("screens").mkdirs()
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.test",
-      featureName = "Test",
-      projectPackage = "com.example",
+    createModule(
       shouldIncludeEffects = true,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
       isKmpProject = true,
     )
 
-    val generatedModuleDir = tempDir.resolve("screens/test-feature/src/commonMain/kotlin/com/example/test")
+    val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/commonMain/kotlin/com/example/test")
 
     // Verify effects file exists in commonMain
-    val effectsFile = File(generatedModuleDir, "TestEffects.kt")
+    val effectsFile = File(implSrcDir, "TestEffects.kt")
     assertFileExists(effectsFile, "TestEffects.kt")
 
     // Verify effects file content
@@ -407,164 +314,102 @@ class ScreensModuleTest : TempDirTest() {
   }
 
   @Test
-  fun `KMP build file matches expected fixture`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
-
-    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
-    val fixtureBuildFile = getFixtureFile("fixtures/kmp-basic/build.gradle.kts")
+  fun `Android impl build file matches expected fixture`() {
+    generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = fixtureBuildFile,
-      generated = generatedBuildFile,
-      description = "KMP build.gradle.kts",
+      fixture = getFixtureFile("fixtures/basic/impl/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/impl/build.gradle.kts"),
+      description = "Android impl build.gradle.kts",
     )
   }
 
   @Test
-  fun `KMP screenshot test file matches expected fixture`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
-
-    val generatedTestFile = tempDir.resolve(
-      "screens/test-feature/src/androidHostTest/kotlin/com/example/screens/test/TestScreenshotTest.kt",
-    )
-    val fixtureTestFile = getFixtureFile("fixtures/kmp-basic/TestScreenshotTest.kt")
+  fun `Android public build file matches expected fixture`() {
+    generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = fixtureTestFile,
-      generated = generatedTestFile,
-      description = "KMP TestScreenshotTest.kt",
+      fixture = getFixtureFile("fixtures/basic/public/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/public/build.gradle.kts"),
+      description = "Android public build.gradle.kts",
     )
   }
 
   @Test
-  fun `Android build file matches expected fixture`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
-
-    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
-    val fixtureBuildFile = getFixtureFile("fixtures/basic/build.gradle.kts")
+  fun `Android key file matches expected fixture`() {
+    generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = fixtureBuildFile,
-      generated = generatedBuildFile,
-      description = "Android build.gradle.kts",
+      fixture = getFixtureFile("fixtures/basic/public/TestKey.kt"),
+      generated = tempDir.resolve("screens/test-feature/public/src/main/kotlin/com/example/screens/test/TestKey.kt"),
+      description = "Android TestKey.kt",
+    )
+  }
+
+  @Test
+  fun `Android nav file matches expected fixture`() {
+    generateFixtureModule()
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/basic/impl/TestNav.kt"),
+      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
+      description = "Android TestNav.kt",
+    )
+  }
+
+  @Test
+  fun `Android nav entry registrar matches expected fixture`() {
+    generateFixtureModule()
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/basic/impl/TestNavEntryRegistrar.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNavEntryRegistrar.kt",
+      ),
+      description = "Android TestNavEntryRegistrar.kt",
     )
   }
 
   @Test
   fun `Android screenshot test file matches expected fixture`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-    )
-
-    val generatedTestFile = tempDir.resolve(
-      "screens/test-feature/src/test/kotlin/com/example/screens/test/TestScreenshotTest.kt",
-    )
-    val fixtureTestFile = getFixtureFile("fixtures/basic/TestScreenshotTest.kt")
+    generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = fixtureTestFile,
-      generated = generatedTestFile,
+      fixture = getFixtureFile("fixtures/basic/impl/TestScreenshotTest.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/test/kotlin/com/example/screens/test/TestScreenshotTest.kt",
+      ),
       description = "Android TestScreenshotTest.kt",
     )
   }
 
   @Test
-  fun `generates Metro Android module with correct build file`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-      diFramework = DiFramework.Metro,
-    )
-
-    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
-    val fixtureBuildFile = getFixtureFile("fixtures/basic-metro/build.gradle.kts")
+  fun `generates Metro Android module with correct impl build file`() {
+    generateFixtureModule(diFramework = DiFramework.Metro)
 
     assertFileContentMatches(
-      fixture = fixtureBuildFile,
-      generated = generatedBuildFile,
-      description = "Metro Android build.gradle.kts",
+      fixture = getFixtureFile("fixtures/basic-metro/impl/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/impl/build.gradle.kts"),
+      description = "Metro Android impl build.gradle.kts",
+    )
+  }
+
+  @Test
+  fun `generates Metro Android module with correct public build file`() {
+    generateFixtureModule(diFramework = DiFramework.Metro)
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/basic-metro/public/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/public/build.gradle.kts"),
+      description = "Metro Android public build.gradle.kts",
     )
   }
 
   @Test
   fun `generates Metro Android module without kotlin-inject dependencies`() {
-    tempDir.resolve("screens").mkdirs()
+    generateFixtureModule(diFramework = DiFramework.Metro)
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-      diFramework = DiFramework.Metro,
-    )
-
-    val buildContent = tempDir.resolve("screens/test-feature/build.gradle.kts").readText()
+    val buildContent = tempDir.resolve("screens/test-feature/impl/build.gradle.kts").readText()
 
     // Verify Metro plugin is used
     assertContains(charSequence = buildContent, other = "libs.plugins.metro")
@@ -576,167 +421,128 @@ class ScreensModuleTest : TempDirTest() {
 
   @Test
   fun `generates Metro Nav file with correct imports and annotations`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-      diFramework = DiFramework.Metro,
-    )
-
-    val generatedNavFile = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/screens/test/TestNav.kt")
-    val fixtureNavFile = getFixtureFile("fixtures/basic-metro/TestNav.kt")
+    generateFixtureModule(diFramework = DiFramework.Metro)
 
     assertFileContentMatches(
-      fixture = fixtureNavFile,
-      generated = generatedNavFile,
+      fixture = getFixtureFile("fixtures/basic-metro/impl/TestNav.kt"),
+      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
       description = "Metro TestNav.kt",
     )
   }
 
   @Test
-  fun `generates Metro Compositor file with correct import`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
-      diFramework = DiFramework.Metro,
-    )
-
-    val generatedCompositorFile = tempDir.resolve(
-      "screens/test-feature/src/main/kotlin/com/example/screens/test/TestCompositor.kt",
-    )
-    val fixtureCompositorFile = getFixtureFile("fixtures/basic-metro/TestCompositor.kt")
+  fun `generates Metro nav entry registrar with correct imports and annotations`() {
+    generateFixtureModule(diFramework = DiFramework.Metro)
 
     assertFileContentMatches(
-      fixture = fixtureCompositorFile,
-      generated = generatedCompositorFile,
+      fixture = getFixtureFile("fixtures/basic-metro/impl/TestNavEntryRegistrar.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNavEntryRegistrar.kt",
+      ),
+      description = "Metro TestNavEntryRegistrar.kt",
+    )
+  }
+
+  @Test
+  fun `generates Metro Compositor file with correct import`() {
+    generateFixtureModule(diFramework = DiFramework.Metro)
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/basic-metro/impl/TestCompositor.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestCompositor.kt",
+      ),
       description = "Metro TestCompositor.kt",
     )
   }
 
   @Test
   fun `generates Metro module with effects using correct import`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = true,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
+    generateFixtureModule(
       diFramework = DiFramework.Metro,
+      shouldIncludeEffects = true,
     )
-
-    val generatedEffectsFile = tempDir.resolve(
-      "screens/test-feature/src/main/kotlin/com/example/screens/test/TestEffects.kt",
-    )
-    val fixtureEffectsFile = getFixtureFile("fixtures/with-effects-metro/TestEffects.kt")
 
     assertFileContentMatches(
-      fixture = fixtureEffectsFile,
-      generated = generatedEffectsFile,
+      fixture = getFixtureFile("fixtures/with-effects-metro/impl/TestEffects.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestEffects.kt",
+      ),
       description = "Metro TestEffects.kt",
     )
   }
 
   @Test
   fun `generates Metro Nav file with effects`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = true,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = false,
+    generateFixtureModule(
       diFramework = DiFramework.Metro,
+      shouldIncludeEffects = true,
     )
 
-    val generatedNavFile = tempDir.resolve("screens/test-feature/src/main/kotlin/com/example/screens/test/TestNav.kt")
-    val fixtureNavFile = getFixtureFile("fixtures/with-effects-metro/TestNav.kt")
-
     assertFileContentMatches(
-      fixture = fixtureNavFile,
-      generated = generatedNavFile,
+      fixture = getFixtureFile("fixtures/with-effects-metro/impl/TestNav.kt"),
+      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
       description = "Metro TestNav.kt with effects",
     )
   }
 
   @Test
-  fun `generates Metro KMP module with correct build file`() {
-    tempDir.resolve("screens").mkdirs()
+  fun `KMP impl build file matches expected fixture`() {
+    generateFixtureModule(isKmpProject = true)
 
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/kmp-basic/impl/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/impl/build.gradle.kts"),
+      description = "KMP impl build.gradle.kts",
+    )
+  }
+
+  @Test
+  fun `KMP public build file matches expected fixture`() {
+    generateFixtureModule(isKmpProject = true)
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/kmp-basic/public/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/public/build.gradle.kts"),
+      description = "KMP public build.gradle.kts",
+    )
+  }
+
+  @Test
+  fun `KMP screenshot test file matches expected fixture`() {
+    generateFixtureModule(isKmpProject = true)
+
+    assertFileContentMatches(
+      fixture = getFixtureFile("fixtures/kmp-basic/impl/TestScreenshotTest.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/androidHostTest/kotlin/com/example/screens/test/TestScreenshotTest.kt",
+      ),
+      description = "KMP TestScreenshotTest.kt",
+    )
+  }
+
+  @Test
+  fun `generates Metro KMP module with correct impl build file`() {
+    generateFixtureModule(
       isKmpProject = true,
       diFramework = DiFramework.Metro,
     )
 
-    val generatedBuildFile = tempDir.resolve("screens/test-feature/build.gradle.kts")
-    val fixtureBuildFile = getFixtureFile("fixtures/kmp-metro/build.gradle.kts")
-
     assertFileContentMatches(
-      fixture = fixtureBuildFile,
-      generated = generatedBuildFile,
-      description = "Metro KMP build.gradle.kts",
+      fixture = getFixtureFile("fixtures/kmp-metro/impl/build.gradle.kts"),
+      generated = tempDir.resolve("screens/test-feature/impl/build.gradle.kts"),
+      description = "Metro KMP impl build.gradle.kts",
     )
   }
 
   @Test
   fun `generates Metro KMP module without kspDependenciesForAllTargets`() {
-    tempDir.resolve("screens").mkdirs()
-
-    createScreensModule(
-      projectDir = tempDir,
-      projectName = "Example",
-      moduleName = "test-feature",
-      featurePackage = "com.example.screens.test",
-      featureName = "Test",
-      projectPackage = "com.example",
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
+    generateFixtureModule(
       isKmpProject = true,
       diFramework = DiFramework.Metro,
     )
 
-    val buildContent = tempDir.resolve("screens/test-feature/build.gradle.kts").readText()
+    val buildContent = tempDir.resolve("screens/test-feature/impl/build.gradle.kts").readText()
 
     // Verify Metro plugin is used
     assertContains(charSequence = buildContent, other = "libs.plugins.metro")
@@ -748,5 +554,47 @@ class ScreensModuleTest : TempDirTest() {
       "Metro KMP build should not have kspDependenciesForAllTargets",
     )
     assertFalse(buildContent.contains("libs.plugins.ksp"), "Metro KMP build should not have ksp plugin")
+  }
+
+  private fun createModule(
+    moduleName: String = "test-feature",
+    featurePackage: String = "com.example.test",
+    featureName: String = "Test",
+    shouldIncludeEffects: Boolean = false,
+    shouldGeneratePreview: Boolean = true,
+    shouldGeneratePreviewParameterProvider: Boolean = true,
+    isKmpProject: Boolean = false,
+    diFramework: DiFramework = DiFramework.KotlinInjectAnvil,
+    testUtilsModulePath: String = ":test-utils",
+  ) {
+    createScreensModule(
+      projectDir = tempDir,
+      projectName = "Example",
+      moduleName = moduleName,
+      featurePackage = featurePackage,
+      featureName = featureName,
+      projectPackage = "com.example",
+      shouldIncludeEffects = shouldIncludeEffects,
+      shouldGeneratePreview = shouldGeneratePreview,
+      shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProvider,
+      isKmpProject = isKmpProject,
+      diFramework = diFramework,
+      testUtilsModulePath = testUtilsModulePath,
+    )
+  }
+
+  private fun generateFixtureModule(
+    shouldIncludeEffects: Boolean = false,
+    isKmpProject: Boolean = false,
+    diFramework: DiFramework = DiFramework.KotlinInjectAnvil,
+  ) {
+    tempDir.resolve("screens").mkdirs()
+
+    createModule(
+      featurePackage = "com.example.screens.test",
+      shouldIncludeEffects = shouldIncludeEffects,
+      isKmpProject = isKmpProject,
+      diFramework = diFramework,
+    )
   }
 }

@@ -220,8 +220,6 @@ class ModuleGeneratorCliTest {
     // Create basic directory structure
     tempDir.resolve("screens").mkdirs()
     tempDir.resolve("app").mkdirs()
-    tempDir.resolve("nav/src/main/kotlin/com/test/nav").mkdirs()
-    tempDir.resolve("nav/src/test/kotlin/com/test/nav").mkdirs()
 
     // Create settings.gradle.kts
     tempDir.resolve("settings.gradle.kts").writeText(
@@ -233,45 +231,6 @@ class ModuleGeneratorCliTest {
       """
       dependencies {
         implementation(libs.compose.runtime)
-      }
-      """.trimIndent(),
-    )
-
-    // Create nav/build.gradle.kts
-    tempDir.resolve("nav/build.gradle.kts").writeText(
-      """
-      dependencies {
-        implementation(libs.compose.runtime)
-      }
-      """.trimIndent(),
-    )
-
-    // Create navigators file
-    tempDir.resolve("nav/src/main/kotlin/com/test/nav/TestAppNavigators.kt").writeText(
-      """
-      package com.test.nav
-      
-      class TestAppNavigators {
-      }
-      """.trimIndent(),
-    )
-
-    // Create navigators test file
-    tempDir.resolve("nav/src/test/kotlin/com/test/nav/TestAppNavigatorsTest.kt").writeText(
-      """
-      package com.test.nav
-      
-      class TestAppNavigatorsTest {
-      }
-      """.trimIndent(),
-    )
-
-    // Create nav file
-    tempDir.resolve("nav/src/main/kotlin/com/test/nav/TestAppNav.kt").writeText(
-      """
-      package com.test.nav
-      
-      fun createNav() {
       }
       """.trimIndent(),
     )

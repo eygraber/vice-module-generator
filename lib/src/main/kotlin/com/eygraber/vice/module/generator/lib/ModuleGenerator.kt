@@ -1,8 +1,7 @@
 package com.eygraber.vice.module.generator.lib
 
-import com.eygraber.vice.module.generator.lib.internal.addModuleToAppAndNavDependencies
+import com.eygraber.vice.module.generator.lib.internal.addModuleToAppDependencies
 import com.eygraber.vice.module.generator.lib.internal.addModuleToSettings
-import com.eygraber.vice.module.generator.lib.internal.addToNav
 import com.eygraber.vice.module.generator.lib.internal.createScreensModule
 import java.io.File
 
@@ -28,6 +27,7 @@ public data class ModuleGeneratorConfig(
   val shouldGeneratePreviewParameterProvider: Boolean = true,
   val isKmpProject: Boolean = false,
   val diFramework: DiFramework = DiFramework.KotlinInjectAnvil,
+  val testUtilsModulePath: String = ":test-utils",
 ) {
   val featurePackage: String = overridingFeaturePackage
     ?: "$projectPackage.screens.${NameInference.inferPackageName(featureName)}"
@@ -50,7 +50,18 @@ public class ModuleGenerator {
   /**
    * Generates a new screen module with the given configuration.
    */
-  public fun generate(config: ModuleGeneratorConfig): GenerationResult = try {
+  public fun generate(config: ModuleGeneratorConfig): GenerationResult {
+    val validation = validate(config)
+    if(validation is ValidationResult.Invalid) {
+      return GenerationResult.Failure(
+        "Invalid configuration:\n${validation.errors.joinToString(separator = "\n")}",
+      )
+    }
+
+    return runGeneration(config)
+  }
+
+  private fun runGeneration(config: ModuleGeneratorConfig): GenerationResult = try {
     createScreensModule(
       projectDir = config.projectDir,
       projectName = config.projectName,
@@ -63,6 +74,7 @@ public class ModuleGenerator {
       shouldGeneratePreviewParameterProvider = config.shouldGeneratePreviewParameterProvider,
       isKmpProject = config.isKmpProject,
       diFramework = config.diFramework,
+      testUtilsModulePath = config.testUtilsModulePath,
     )
 
     addModuleToSettings(
@@ -70,20 +82,10 @@ public class ModuleGenerator {
       moduleName = config.moduleName,
     )
 
-    addModuleToAppAndNavDependencies(
+    addModuleToAppDependencies(
       projectDir = config.projectDir,
       moduleName = config.moduleName,
       isKmpProject = config.isKmpProject,
-    )
-
-    addToNav(
-      projectDir = config.projectDir,
-      projectName = config.projectName,
-      featurePackage = config.featurePackage,
-      featureName = config.featureName,
-      projectPackage = config.projectPackage,
-      isKmpProject = config.isKmpProject,
-      diFramework = config.diFramework,
     )
 
     GenerationResult.Success
@@ -101,7 +103,7 @@ public class ModuleGenerator {
     recordTask: String,
   ) {
     val projectRoot = config.projectDir
-    val gradleTask = ":screens:${config.moduleName}:$recordTask"
+    val gradleTask = ":screens:${config.moduleName}:impl:$recordTask"
 
     onTaskAboutToRun(gradleTask)
 

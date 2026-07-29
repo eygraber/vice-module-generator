@@ -20,11 +20,13 @@ internal object NavGenerator : FileGenerator {
     val imports = sortedImports(
       effectsImports +
         listOf(
+          "androidx.navigation3.runtime.NavBackStack",
           "androidx.navigation3.runtime.NavKey",
           "${context.projectPackage}.di.scopes.NavScope",
           "${context.projectPackage}.di.scopes.ScreenScope",
+          "${context.projectPackage}.nav.entry.ViceNavEntryProviderOf",
+          "${context.projectPackage}.nav.pop",
           "com.eygraber.vice.nav3.ViceNavEntryProvider",
-          "kotlinx.serialization.Serializable",
         ) +
         diConfig.navImports(context),
     )
@@ -51,25 +53,22 @@ internal object NavGenerator : FileGenerator {
       """.trimMargin()
     }
 
-    val componentCode = diConfig.navDiCode(context)
+    val diCode = diConfig.navDiCode(context)
 
     return """
     |package ${context.featurePackage}
     |
     |$imports
     |
-    |@Serializable
-    |data object ${context.keyName} : NavKey
-    |
     |@Inject
     |@SingleIn(ScreenScope::class)
-    |class ${context.navEntryProviderName}(
+    |internal class ${context.navEntryProviderName}(
     |$navEntryProviderParams
     |) : ViceNavEntryProvider<Key, Intent, Compositor, Effects, ViewState>() {
     |$navEntryProviderProperties
     |}
     |
-    |$componentCode
+    |$diCode
     |
     |private typealias Key = ${context.keyName}
     |private typealias View = ${context.viewName}
@@ -77,6 +76,10 @@ internal object NavGenerator : FileGenerator {
     |private typealias Compositor = ${context.compositorName}
     |private typealias Effects = ${context.effectsName}
     |private typealias ViewState = ${context.viewStateName}
+    |
+    |internal fun ${context.navigatorFactoryName}(backStack: NavBackStack<NavKey>) = ${context.navigatorName}(
+    |  onNavigateBack = { backStack.pop() },
+    |)
     |
     """.trimMargin()
   }

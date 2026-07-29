@@ -4,6 +4,7 @@ import com.eygraber.vice.module.generator.lib.DiFramework
 import com.eygraber.vice.module.generator.lib.internal.screens.ScreensModuleOrchestrator
 import java.io.File
 
+@Suppress("LongParameterList")
 internal fun createScreensModule(
   projectDir: File,
   projectName: String,
@@ -16,8 +17,10 @@ internal fun createScreensModule(
   shouldGeneratePreviewParameterProvider: Boolean,
   isKmpProject: Boolean,
   diFramework: DiFramework = DiFramework.KotlinInjectAnvil,
+  testUtilsModulePath: String = ":test-utils",
 ) {
   val context = GeneratorContext(
+    moduleName = moduleName,
     featurePackage = featurePackage,
     featureName = featureName,
     projectName = projectName,
@@ -27,21 +30,29 @@ internal fun createScreensModule(
     shouldIncludeEffects = shouldIncludeEffects,
     shouldGeneratePreview = shouldGeneratePreview,
     shouldGeneratePreviewParameterProvider = shouldGeneratePreviewParameterProvider,
+    testUtilsModulePath = testUtilsModulePath,
   )
 
   val screensDir = File(projectDir, "screens")
-  val moduleDir = File(screensDir, moduleName.replace(":", "/")).apply { mkdir() }
-
-  val mainDir = File(moduleDir, "src" / context.mainSourceSetName).apply { mkdirs() }
-  val testDir = File(moduleDir, "src" / context.testSourceSetName).apply { mkdirs() }
+  val moduleDir = File(screensDir, moduleName.replace(":", "/")).apply { mkdirs() }
   val packagePath = featurePackage.replace(".", File.separator)
-  val mainPackageDir = File(mainDir, "kotlin" / packagePath).apply { mkdirs() }
-  val testPackageDir = File(testDir, "kotlin" / packagePath).apply { mkdirs() }
+
+  val publicModuleDir = File(moduleDir, "public").apply { mkdirs() }
+  val publicMainDir = File(publicModuleDir, "src" / context.mainSourceSetName)
+  val publicPackageDir = File(publicMainDir, "kotlin" / packagePath).apply { mkdirs() }
+
+  val implModuleDir = File(moduleDir, "impl").apply { mkdirs() }
+  val implMainDir = File(implModuleDir, "src" / context.mainSourceSetName)
+  val implPackageDir = File(implMainDir, "kotlin" / packagePath).apply { mkdirs() }
+  val implTestDir = File(implModuleDir, "src" / context.testSourceSetName)
+  val implTestPackageDir = File(implTestDir, "kotlin" / packagePath).apply { mkdirs() }
 
   ScreensModuleOrchestrator().createModule(
-    moduleDir = moduleDir,
-    mainPackageDir = mainPackageDir,
-    testPackageDir = testPackageDir,
+    publicModuleDir = publicModuleDir,
+    publicPackageDir = publicPackageDir,
+    implModuleDir = implModuleDir,
+    implPackageDir = implPackageDir,
+    implTestPackageDir = implTestPackageDir,
     context = context,
   )
 }

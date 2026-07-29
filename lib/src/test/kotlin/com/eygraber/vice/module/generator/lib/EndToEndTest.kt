@@ -35,8 +35,8 @@ class EndToEndTest : TempDirTest() {
 
     verifyModuleCreated()
     verifySettingsUpdated()
-    verifyNavDependenciesUpdated()
-    verifyNavigationFilesUpdated()
+    verifyAppDependenciesUpdated()
+    verifyNavNotTouched()
   }
 
   @Test
@@ -59,7 +59,7 @@ class EndToEndTest : TempDirTest() {
     assertTrue(result is GenerationResult.Success, "Generation should succeed")
 
     val effectsFile = tempDir.resolve(
-      "screens/test-feature/src/main/kotlin/com/example/test/feature/TestFeatureEffects.kt",
+      "screens/test-feature/impl/src/main/kotlin/com/example/test/feature/TestFeatureEffects.kt",
     )
     assertTrue(effectsFile.exists(), "Effects file should exist")
   }
@@ -84,7 +84,7 @@ class EndToEndTest : TempDirTest() {
     assertTrue(result is GenerationResult.Success, "Generation should succeed")
 
     val previewProviderFile = tempDir.resolve(
-      "screens/test-feature/src/main/kotlin/com/example/test/feature/TestFeatureViewStatePreviewProvider.kt",
+      "screens/test-feature/impl/src/main/kotlin/com/example/test/feature/TestFeatureViewStatePreviewProvider.kt",
     )
     assertFalse(previewProviderFile.exists(), "Preview provider file should not exist")
   }
@@ -166,13 +166,15 @@ class EndToEndTest : TempDirTest() {
 
     // Verify both are in settings
     val settingsContent = readGeneratedFile("settings.gradle.kts")
-    assertTrue(settingsContent.contains("include(\":screens:alpha-feature\")"))
-    assertTrue(settingsContent.contains("include(\":screens:beta-feature\")"))
+    assertTrue(settingsContent.contains("include(\":screens:alpha-feature:impl\")"))
+    assertTrue(settingsContent.contains("include(\":screens:alpha-feature:public\")"))
+    assertTrue(settingsContent.contains("include(\":screens:beta-feature:impl\")"))
+    assertTrue(settingsContent.contains("include(\":screens:beta-feature:public\")"))
 
-    // Verify both are in nav files
-    val navigatorsContent = readGeneratedFile("nav/src/main/kotlin/com/example/nav/ExampleNavigators.kt")
-    assertTrue(navigatorsContent.contains("fun alphaFeature("))
-    assertTrue(navigatorsContent.contains("fun betaFeature("))
+    // Verify both are in the app build file
+    val appContent = readGeneratedFile("app/build.gradle.kts")
+    assertTrue(appContent.contains("implementation(projects.screens.alphaFeature.impl)"))
+    assertTrue(appContent.contains("implementation(projects.screens.betaFeature.impl)"))
   }
 
   @Test
@@ -198,7 +200,7 @@ class EndToEndTest : TempDirTest() {
     assertTrue(moduleDir.exists(), "Module directory with kebab-case name should exist")
 
     // Verify inferred package name (dot-case)
-    val packageDir = moduleDir.resolve("src/main/kotlin/com/example/screens/my/cool/feature")
+    val packageDir = moduleDir.resolve("impl/src/main/kotlin/com/example/screens/my/cool/feature")
     assertTrue(packageDir.exists(), "Package directory with dot-separated path should exist")
   }
 
@@ -227,8 +229,7 @@ class EndToEndTest : TempDirTest() {
 
     verifyKmpModuleCreated()
     verifySettingsUpdated()
-    verifyKmpNavDependenciesUpdated()
-    verifyKmpNavigationFilesUpdated()
+    verifyKmpAppDependenciesUpdated()
   }
 
   @Test
@@ -252,71 +253,15 @@ class EndToEndTest : TempDirTest() {
     assertTrue(result is GenerationResult.Success, "KMP generation with effects should succeed")
 
     val effectsFile = tempDir.resolve(
-      "screens/test-feature/src/commonMain/kotlin/com/example/test/feature/TestFeatureEffects.kt",
+      "screens/test-feature/impl/src/commonMain/kotlin/com/example/test/feature/TestFeatureEffects.kt",
     )
     assertTrue(effectsFile.exists(), "Effects file should exist in commonMain for KMP")
-  }
-
-  @Test
-  fun `end-to-end - generates multiple KMP modules sequentially`() {
-    setupCompleteKmpProjectStructure()
-
-    val config1 = ModuleGeneratorConfig(
-      projectDir = tempDir,
-      projectName = "Example",
-      projectPackage = "com.example",
-      featureName = "AlphaFeature",
-      overridingFeaturePackage = null,
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
-
-    val result1 = generator.generate(config1)
-    assertTrue(result1 is GenerationResult.Success, "First KMP generation should succeed")
-
-    val config2 = ModuleGeneratorConfig(
-      projectDir = tempDir,
-      projectName = "Example",
-      projectPackage = "com.example",
-      featureName = "BetaFeature",
-      overridingFeaturePackage = null,
-      shouldIncludeEffects = false,
-      shouldGeneratePreview = true,
-      shouldGeneratePreviewParameterProvider = true,
-      isKmpProject = true,
-    )
-
-    val result2 = generator.generate(config2)
-    assertTrue(result2 is GenerationResult.Success, "Second KMP generation should succeed")
-
-    // Verify both modules exist
-    assertTrue(tempDir.resolve("screens/alpha-feature").exists(), "Alpha module should exist")
-    assertTrue(tempDir.resolve("screens/beta-feature").exists(), "Beta module should exist")
-
-    // Verify both are in settings
-    val settingsContent = readGeneratedFile("settings.gradle.kts")
-    assertTrue(settingsContent.contains("include(\":screens:alpha-feature\")"))
-    assertTrue(settingsContent.contains("include(\":screens:beta-feature\")"))
-
-    // Verify both are in apps/shared
-    val sharedContent = readGeneratedFile("apps/shared/build.gradle.kts")
-    assertTrue(sharedContent.contains("api(projects.screens.alphaFeature)"))
-    assertTrue(sharedContent.contains("api(projects.screens.betaFeature)"))
-
-    // Verify both are in nav files
-    val navigatorsContent = readGeneratedFile("nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt")
-    assertTrue(navigatorsContent.contains("fun alphaFeature("))
-    assertTrue(navigatorsContent.contains("fun betaFeature("))
   }
 
   private fun setupCompleteProjectStructure() {
     // Create basic directory structure
     tempDir.resolve("screens").mkdirs()
     tempDir.resolve("app").mkdirs()
-    tempDir.resolve("nav/src/main/kotlin/com/example/nav").mkdirs()
-    tempDir.resolve("nav/src/test/kotlin/com/example/nav").mkdirs()
 
     // Create settings.gradle.kts
     createFile(
@@ -334,45 +279,12 @@ class EndToEndTest : TempDirTest() {
       """.trimMargin(),
     )
 
-    // Create nav/build.gradle.kts
+    // Create nav/build.gradle.kts so the generator can prove it leaves it alone
     createFile(
       path = "nav/build.gradle.kts",
       content = """
       |dependencies {
       |  implementation(libs.compose.runtime)
-      |}
-      """.trimMargin(),
-    )
-
-    // Create navigators file
-    createFile(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNavigators.kt",
-      content = """
-      |package com.example.nav
-      |
-      |internal object ExampleNavigators {
-      |}
-      """.trimMargin(),
-    )
-
-    // Create navigators test file
-    createFile(
-      path = "nav/src/test/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
-      content = """
-      |package com.example.nav
-      |
-      |class ExampleNavigatorsTest {
-      |}
-      """.trimMargin(),
-    )
-
-    // Create nav file
-    createFile(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNav.kt",
-      content = """
-      |package com.example.nav
-      |
-      |fun createNav() {
       |}
       """.trimMargin(),
     )
@@ -382,8 +294,6 @@ class EndToEndTest : TempDirTest() {
     // Create basic directory structure
     tempDir.resolve("screens").mkdirs()
     tempDir.resolve("apps/shared").mkdirs()
-    tempDir.resolve("nav/src/commonMain/kotlin/com/example/nav").mkdirs()
-    tempDir.resolve("nav/src/commonTest/kotlin/com/example/nav").mkdirs()
 
     // Create settings.gradle.kts
     createFile(
@@ -404,81 +314,48 @@ class EndToEndTest : TempDirTest() {
       |}
       """.trimMargin(),
     )
-
-    // Create nav/build.gradle.kts for KMP
-    createFile(
-      path = "nav/build.gradle.kts",
-      content = """
-      |kotlin {
-      |  sourceSets {
-      |    commonMain.dependencies {
-      |      implementation(libs.compose.runtime)
-      |    }
-      |  }
-      |}
-      """.trimMargin(),
-    )
-
-    // Create navigators file
-    createFile(
-      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt",
-      content = """
-      |package com.example.nav
-      |
-      |internal object ExampleNavigators {
-      |}
-      """.trimMargin(),
-    )
-
-    // Create navigators test file
-    createFile(
-      path = "nav/src/commonTest/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
-      content = """
-      |package com.example.nav
-      |
-      |class ExampleNavigatorsTest {
-      |}
-      """.trimMargin(),
-    )
-
-    // Create nav file
-    createFile(
-      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNav.kt",
-      content = """
-      |package com.example.nav
-      |
-      |fun createNav() {
-      |}
-      """.trimMargin(),
-    )
   }
 
   private fun verifyModuleCreated() {
     val moduleDir = tempDir.resolve("screens/test-feature")
     assertTrue(moduleDir.exists(), "Module directory should exist")
 
-    val srcDir = moduleDir.resolve("src/main/kotlin/com/example/screens/test/feature")
-    assertTrue(File(srcDir, "TestFeatureNav.kt").exists(), "Nav file should exist")
-    assertTrue(File(srcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist")
-    assertTrue(File(srcDir, "TestFeatureCompositor.kt").exists(), "Compositor file should exist")
-    assertTrue(File(srcDir, "TestFeatureIntent.kt").exists(), "Intent file should exist")
-    assertTrue(File(srcDir, "TestFeatureView.kt").exists(), "View file should exist")
-    assertTrue(File(srcDir, "TestFeatureViewState.kt").exists(), "ViewState file should exist")
+    val publicSrcDir = moduleDir.resolve("public/src/main/kotlin/com/example/screens/test/feature")
+    assertTrue(File(publicSrcDir, "TestFeatureKey.kt").exists(), "Key file should exist")
+
+    val implSrcDir = moduleDir.resolve("impl/src/main/kotlin/com/example/screens/test/feature")
+    assertTrue(File(implSrcDir, "TestFeatureNav.kt").exists(), "Nav file should exist")
+    assertTrue(
+      File(implSrcDir, "TestFeatureNavEntryRegistrar.kt").exists(),
+      "Nav entry registrar file should exist",
+    )
+    assertTrue(File(implSrcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist")
+    assertTrue(File(implSrcDir, "TestFeatureCompositor.kt").exists(), "Compositor file should exist")
+    assertTrue(File(implSrcDir, "TestFeatureIntent.kt").exists(), "Intent file should exist")
+    assertTrue(File(implSrcDir, "TestFeatureView.kt").exists(), "View file should exist")
+    assertTrue(File(implSrcDir, "TestFeatureViewState.kt").exists(), "ViewState file should exist")
   }
 
   private fun verifyKmpModuleCreated() {
     val moduleDir = tempDir.resolve("screens/test-feature")
     assertTrue(moduleDir.exists(), "KMP module directory should exist")
 
-    val srcDir = moduleDir.resolve("src/commonMain/kotlin/com/example/screens/test/feature")
-    assertTrue(File(srcDir, "TestFeatureNav.kt").exists(), "Nav file should exist in commonMain")
-    assertTrue(File(srcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist in commonMain")
-    assertTrue(File(srcDir, "TestFeatureCompositor.kt").exists(), "Compositor file should exist in commonMain")
-    assertTrue(File(srcDir, "TestFeatureIntent.kt").exists(), "Intent file should exist in commonMain")
-    assertTrue(File(srcDir, "TestFeatureView.kt").exists(), "View file should exist in commonMain")
-    assertTrue(File(srcDir, "TestFeatureViewState.kt").exists(), "ViewState file should exist in commonMain")
+    val publicSrcDir = moduleDir.resolve("public/src/commonMain/kotlin/com/example/screens/test/feature")
+    assertTrue(File(publicSrcDir, "TestFeatureKey.kt").exists(), "Key file should exist in commonMain")
 
-    val testDir = moduleDir.resolve("src/androidHostTest/kotlin/com/example/screens/test/feature")
+    val implSrcDir = moduleDir.resolve("impl/src/commonMain/kotlin/com/example/screens/test/feature")
+    assertTrue(File(implSrcDir, "TestFeatureNav.kt").exists(), "Nav file should exist in commonMain")
+    assertTrue(
+      File(implSrcDir, "TestFeatureNavEntryRegistrar.kt").exists(),
+      "Nav entry registrar file should exist in commonMain",
+    )
+    assertTrue(File(implSrcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist in commonMain")
+    assertTrue(File(implSrcDir, "TestFeatureCompositor.kt").exists(), "Compositor file should exist in commonMain")
+    assertTrue(File(implSrcDir, "TestFeatureIntent.kt").exists(), "Intent file should exist in commonMain")
+    assertTrue(File(implSrcDir, "TestFeatureView.kt").exists(), "View file should exist in commonMain")
+    assertTrue(File(implSrcDir, "TestFeatureViewState.kt").exists(), "ViewState file should exist in commonMain")
+
+    val testDir = moduleDir.resolve("impl/src/androidHostTest/kotlin/com/example/screens/test/feature")
     assertTrue(
       File(testDir, "TestFeatureScreenshotTest.kt").exists(),
       "Screenshot test should exist in androidHostTest",
@@ -488,76 +365,50 @@ class EndToEndTest : TempDirTest() {
   private fun verifySettingsUpdated() {
     assertGeneratedFileContains(
       path = "settings.gradle.kts",
-      expectedContent = "include(\":screens:test-feature\")",
+      expectedContent = "include(\":screens:test-feature:impl\")",
+      description = "Settings",
+    )
+
+    assertGeneratedFileContains(
+      path = "settings.gradle.kts",
+      expectedContent = "include(\":screens:test-feature:public\")",
       description = "Settings",
     )
   }
 
-  private fun verifyNavDependenciesUpdated() {
+  private fun verifyAppDependenciesUpdated() {
     assertGeneratedFileContains(
-      path = "nav/build.gradle.kts",
-      expectedContent = "implementation(projects.screens.testFeature)",
-      description = "Nav build",
+      path = "app/build.gradle.kts",
+      expectedContent = "implementation(projects.screens.testFeature.impl)",
+      description = "App build",
     )
 
     assertGeneratedFileContains(
       path = "app/build.gradle.kts",
-      expectedContent = "implementation(projects.screens.testFeature)",
+      expectedContent = "implementation(projects.screens.testFeature.public)",
       description = "App build",
     )
   }
 
-  private fun verifyKmpNavDependenciesUpdated() {
+  private fun verifyKmpAppDependenciesUpdated() {
     assertGeneratedFileContains(
-      path = "nav/build.gradle.kts",
-      expectedContent = "implementation(projects.screens.testFeature)",
-      description = "KMP Nav build",
+      path = "apps/shared/build.gradle.kts",
+      expectedContent = "api(projects.screens.testFeature.impl)",
+      description = "KMP Apps/shared build",
     )
 
     assertGeneratedFileContains(
       path = "apps/shared/build.gradle.kts",
-      expectedContent = "api(projects.screens.testFeature)",
+      expectedContent = "api(projects.screens.testFeature.public)",
       description = "KMP Apps/shared build",
     )
   }
 
-  private fun verifyNavigationFilesUpdated() {
-    assertGeneratedFileContains(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNavigators.kt",
-      expectedContent = "TestFeatureNavigator",
-      description = "Navigators",
-    )
-
-    assertGeneratedFileContains(
-      path = "nav/src/main/kotlin/com/example/nav/ExampleNav.kt",
-      expectedContent = "TestFeatureKey",
-      description = "Nav",
-    )
-
-    assertGeneratedFileContains(
-      path = "nav/src/test/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
-      expectedContent = "testFeatureNavigator",
-      description = "Navigators test",
-    )
-  }
-
-  private fun verifyKmpNavigationFilesUpdated() {
-    assertGeneratedFileContains(
-      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNavigators.kt",
-      expectedContent = "TestFeatureNavigator",
-      description = "KMP Navigators",
-    )
-
-    assertGeneratedFileContains(
-      path = "nav/src/commonMain/kotlin/com/example/nav/ExampleNav.kt",
-      expectedContent = "TestFeatureKey",
-      description = "KMP Nav",
-    )
-
-    assertGeneratedFileContains(
-      path = "nav/src/commonTest/kotlin/com/example/nav/ExampleNavigatorsTest.kt",
-      expectedContent = "testFeatureNavigator",
-      description = "KMP Navigators test",
+  private fun verifyNavNotTouched() {
+    assertGeneratedFileDoesNotContain(
+      path = "nav/build.gradle.kts",
+      unexpectedContent = "projects.screens.testFeature",
+      description = "Nav build",
     )
   }
 }

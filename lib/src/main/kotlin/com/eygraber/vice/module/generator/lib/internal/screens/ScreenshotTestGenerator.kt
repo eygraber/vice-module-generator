@@ -9,8 +9,8 @@ internal object ScreenshotTestGenerator : FileGenerator {
   override fun generate(context: GeneratorContext): String {
     val screenshotTestImports = sortedImports(
       "app.cash.paparazzi.Paparazzi",
-      if(context.isKmpProject) "${context.projectPackage}.test.utils.PaparazziComposeResourcesEffect" else null,
-      "${context.projectPackage}.test.utils.PaparazziDeviceConfig",
+      if(context.isKmpProject) "${context.testUtilsPackage}.PaparazziComposeResourcesEffect" else null,
+      "${context.testUtilsPackage}.PaparazziDeviceConfig",
       "${context.projectPackage}.ui.material.theme.${context.projectName}EdgeToEdgePreviewTheme",
       "com.google.testing.junit.testparameterinjector.TestParameter",
       "com.google.testing.junit.testparameterinjector.TestParameterInjector",

@@ -8,7 +8,7 @@ internal object IntentGenerator : FileGenerator {
   override fun generate(context: GeneratorContext): String = """
   |package ${context.featurePackage}
   |
-  |sealed interface ${context.intentName}
+  |internal sealed interface ${context.intentName}
   |
   """.trimMargin()
 }

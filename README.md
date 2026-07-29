@@ -7,14 +7,23 @@ using a library, GUI application, or CLI.
 ## Overview
 
 Vice Module Generator helps you quickly bootstrap new feature modules following best practices
-and your project's conventions. It generates:
+and your project's conventions. Each screen is generated as a `public`/`impl` module pair:
+
+- `screens/<feature>/public` owns the screen's serializable nav key, so other screens can
+  navigate to it without depending on its implementation
+- `screens/<feature>/impl` owns the VICE components (Compositor, ViewState, View, Intent),
+  the navigator, and a `NavEntryRegistrar` that contributes the screen's nav entry into the
+  nav DI scope via a multibinding — so the `:nav` module never needs to be edited for a new screen
+
+It generates:
 
 - Navigation setup with type-safe routing
+- A nav entry registrar contributed to DI via multibinding
 - State management (Vice compositor pattern)
 - UI composables with previews
 - Test infrastructure
 - Gradle build configuration
-- Integration with your existing project structure
+- `settings.gradle.kts` includes and app module dependencies
 
 ## Modules
 
@@ -79,6 +88,9 @@ java -jar vice-module-generator-cli-0.1.5.jar --project-name=MyApp --project-pac
 - `--with-effects`: Include ViceEffects class in generation
 - `--no-preview`: Skip generating Compose preview
 - `--no-preview-provider`: Skip generating preview parameter provider
+- `--kmp`: Generate for a Kotlin/Compose Multiplatform project
+- `--metro`: Use Metro DI instead of kotlin-inject-anvil
+- `--test-utils-module=PATH`: Gradle path of the project's test utilities module (default: `:test-utils`)
 - `--dry-run`: Dry run, no files will be generated
 - `--help`: Show help message
 
@@ -139,6 +151,9 @@ The generator supports the following configuration options:
 | `shouldIncludeEffects`                   | Boolean | Generate Vice effects handler       | false                      |
 | `shouldGeneratePreview`                  | Boolean | Generate Compose previews           | true                       |
 | `shouldGeneratePreviewParameterProvider` | Boolean | Generate preview parameter provider | true                       |
+| `isKmpProject`                           | Boolean | Generate for a KMP/CMP project      | false                      |
+| `diFramework`                            | Enum    | KotlinInjectAnvil or Metro          | KotlinInjectAnvil          |
+| `testUtilsModulePath`                    | String  | Gradle path of the test utils module | :test-utils               |
 
 ## Running from Source
 

@@ -4,13 +4,21 @@ import com.eygraber.vice.module.generator.lib.internal.GeneratorContext
 import java.io.File
 
 internal class ScreensModuleOrchestrator {
-  private val moduleGenerators: List<FileGenerator> = listOf(
-    BuildGradleGenerator,
-    ConsumerRulesGenerator,
+  private val publicModuleGenerators: List<FileGenerator> = listOf(
+    PublicBuildGradleGenerator,
   )
 
-  private val mainSourceGenerators: List<FileGenerator> = listOf(
+  private val publicSourceGenerators: List<FileGenerator> = listOf(
+    KeyGenerator,
+  )
+
+  private val implModuleGenerators: List<FileGenerator> = listOf(
+    BuildGradleGenerator,
+  )
+
+  private val implSourceGenerators: List<FileGenerator> = listOf(
     NavGenerator,
+    NavEntryRegistrarGenerator,
     NavigatorGenerator,
     CompositorGenerator,
     EffectsGenerator,
@@ -20,44 +28,33 @@ internal class ScreensModuleOrchestrator {
     ViewStatePreviewProviderGenerator,
   )
 
-  private val testSourceGenerators: List<FileGenerator> = listOf(
+  private val implTestSourceGenerators: List<FileGenerator> = listOf(
     ScreenshotTestGenerator,
   )
 
   fun createModule(
-    moduleDir: File,
-    mainPackageDir: File,
-    testPackageDir: File,
+    publicModuleDir: File,
+    publicPackageDir: File,
+    implModuleDir: File,
+    implPackageDir: File,
+    implTestPackageDir: File,
     context: GeneratorContext,
   ) {
-    // Generate module-level files (build.gradle.kts, consumer-rules.pro)
-    moduleGenerators.forEach { generator ->
-      if(generator.shouldGenerate(context)) {
-        File(moduleDir, generator.fileName(context)).apply {
-          if(!exists()) {
-            createNewFile()
-            writeText(generator.generate(context))
-          }
-        }
-      }
-    }
+    generateInto(publicModuleDir, publicModuleGenerators, context)
+    generateInto(publicPackageDir, publicSourceGenerators, context)
+    generateInto(implModuleDir, implModuleGenerators, context)
+    generateInto(implPackageDir, implSourceGenerators, context)
+    generateInto(implTestPackageDir, implTestSourceGenerators, context)
+  }
 
-    // Generate main source files
-    mainSourceGenerators.forEach { generator ->
+  private fun generateInto(
+    dir: File,
+    generators: List<FileGenerator>,
+    context: GeneratorContext,
+  ) {
+    generators.forEach { generator ->
       if(generator.shouldGenerate(context)) {
-        File(mainPackageDir, generator.fileName(context)).apply {
-          if(!exists()) {
-            createNewFile()
-            writeText(generator.generate(context))
-          }
-        }
-      }
-    }
-
-    // Generate test source files
-    testSourceGenerators.forEach { generator ->
-      if(generator.shouldGenerate(context)) {
-        File(testPackageDir, generator.fileName(context)).apply {
+        File(dir, generator.fileName(context)).apply {
           if(!exists()) {
             createNewFile()
             writeText(generator.generate(context))

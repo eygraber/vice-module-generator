@@ -8,7 +8,7 @@ internal object NavigatorGenerator : FileGenerator {
   override fun generate(context: GeneratorContext): String = """
   |package ${context.featurePackage}
   |
-  |class ${context.navigatorName}(
+  |internal class ${context.navigatorName}(
   |  private val onNavigateBack: () -> Unit,
   |) {
   |  fun navigateBack() {

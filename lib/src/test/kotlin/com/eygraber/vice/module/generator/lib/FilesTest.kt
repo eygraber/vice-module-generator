@@ -1,7 +1,6 @@
 package com.eygraber.vice.module.generator.lib
 
 import com.eygraber.vice.module.generator.lib.internal.insert
-import com.eygraber.vice.module.generator.lib.internal.insertMultiline
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -127,223 +126,27 @@ class FilesTest : TempDirTest() {
     )
   }
 
-  // Tests for insertMultiline() function
-
   @Test
-  fun `insertMultiline - adds function to empty class`() {
+  fun `insert - appends at end of file when no section or dependencies block exists`() {
     val file = createFile(
-      path = "EmptyClass.kt",
-      content = """
-      |package com.example
-      |
-      |class EmptyClass {
-      |}
-      """.trimMargin(),
+      path = "settings.gradle.kts",
+      content = "rootProject.name = \"test-project\"\n",
     )
 
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun newFunction() {
-      |    println("test")
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "}",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
+    val result = file.insert(
+      newLine = "include(\":screens:test-feature:impl\")",
+      intoAlphabetizedSectionWithPrefix = "include(",
     )
 
-    assertTrue(result, "Should successfully insert function")
-    val content = file.readText()
-    assertTrue(content.contains("fun newFunction()"))
-    assertTrue(content.contains("println(\"test\")"))
-  }
-
-  @Test
-  fun `insertMultiline - adds function in alphabetical order at beginning`() {
-    val file = createFile(
-      path = "TestClass.kt",
-      content = """
-      |package com.example
-      |
-      |class TestClass {
-      |  fun beta() {
-      |  }
-      |
-      |  fun gamma() {
-      |  }
-      |}
-      """.trimMargin(),
+    assertTrue(result, "Should successfully insert line")
+    val lines = file.readText().lines().filter { it.isNotBlank() }
+    assertEquals(
+      expected = listOf(
+        "rootProject.name = \"test-project\"",
+        "include(\":screens:test-feature:impl\")",
+      ),
+      actual = lines,
+      message = "Line should be appended after the existing content",
     )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun alpha() {
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  }",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
-    )
-
-    assertTrue(result)
-    val lines = file.readText().lines()
-    val alphaIndex = lines.indexOfFirst { it.contains("fun alpha") }
-    val betaIndex = lines.indexOfFirst { it.contains("fun beta") }
-    assertTrue(alphaIndex < betaIndex, "alpha should come before beta")
-  }
-
-  @Test
-  fun `insertMultiline - adds function in alphabetical order in middle`() {
-    val file = createFile(
-      path = "TestClass.kt",
-      content = """
-      |package com.example
-      |
-      |class TestClass {
-      |  fun alpha() {
-      |  }
-      |
-      |  fun gamma() {
-      |  }
-      |}
-      """.trimMargin(),
-    )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun beta() {
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  }",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
-    )
-
-    assertTrue(result)
-    val lines = file.readText().lines()
-    val alphaIndex = lines.indexOfFirst { it.contains("fun alpha") }
-    val betaIndex = lines.indexOfFirst { it.contains("fun beta") }
-    val gammaIndex = lines.indexOfFirst { it.contains("fun gamma") }
-    assertTrue(betaIndex in alphaIndex + 1..<gammaIndex)
-  }
-
-  @Test
-  fun `insertMultiline - adds function in alphabetical order at end`() {
-    val file = createFile(
-      path = "TestClass.kt",
-      content = """
-      |package com.example
-      |
-      |class TestClass {
-      |  fun alpha() {
-      |  }
-      |
-      |  fun beta() {
-      |  }
-      |}
-      """.trimMargin(),
-    )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun gamma() {
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  }",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
-    )
-
-    assertTrue(result)
-    val lines = file.readText().lines()
-    val betaIndex = lines.indexOfFirst { it.contains("fun beta") }
-    val gammaIndex = lines.indexOfFirst { it.contains("fun gamma") }
-    assertTrue(betaIndex < gammaIndex, "beta should come before gamma")
-  }
-
-  @Test
-  fun `insertMultiline - does not add duplicate function`() {
-    val file = createFile(
-      path = "TestClass.kt",
-      content = """
-      |package com.example
-      |
-      |class TestClass {
-      |  fun testFunction() {
-      |  }
-      |}
-      """.trimMargin(),
-    )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun testFunction() {
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  }",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
-    )
-
-    assertFalse(result, "Should not add duplicate function")
-  }
-
-  @Test
-  fun `insertMultiline - handles multi-line function with complex suffix`() {
-    val file = createFileFromFixture(
-      targetPath = "ExampleNavigators.kt",
-      fixturePath = "fixtures/nav/empty-navigators.kt",
-    )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  fun testFeature(
-      |    backStack: NavBackStack<NavKey>,
-      |  ) = TestFeatureNavigator(
-      |    onNavigateBack = { backStack.pop() },
-      |  )
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  )",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  fun "),
-    )
-
-    assertTrue(result, "Should successfully insert navigator function")
-    val content = file.readText()
-    assertTrue(content.contains("fun testFeature("))
-    assertTrue(content.contains("TestFeatureNavigator"))
-  }
-
-  @Test
-  fun `insertMultiline - handles multiline prefix matching`() {
-    val file = createFile(
-      path = "TestFile.kt",
-      content = """
-      |package com.example
-      |
-      |class TestClass {
-      |  @Test
-      |  fun `betaTest - does something`() {
-      |  }
-      |}
-      """.trimMargin(),
-    )
-
-    val result = file.insertMultiline(
-      newLine = """
-      |  @Test
-      |  fun `alphaTest - does something`() {
-      |  }
-      """.trimMargin(),
-      alphabetizedSectionExtractor = { section -> section.takeWhile { !it.isWhitespace() } },
-      lastLineSuffixResolver = "  }",
-      intoAlphabetizedSectionWithPrefix = arrayOf("  @Test\n  fun `"),
-    )
-
-    assertTrue(result)
-    val lines = file.readText().lines()
-    val alphaIndex = lines.indexOfFirst { it.contains("alphaTest") }
-    val betaIndex = lines.indexOfFirst { it.contains("betaTest") }
-    assertTrue(alphaIndex < betaIndex, "alphaTest should come before betaTest")
   }
 }
