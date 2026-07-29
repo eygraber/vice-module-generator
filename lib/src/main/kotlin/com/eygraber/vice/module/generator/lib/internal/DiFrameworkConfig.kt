@@ -5,22 +5,26 @@ import com.eygraber.vice.module.generator.lib.DiFramework
 internal sealed interface DiFrameworkConfig {
   val injectImport: String
 
-  fun navImports(context: GeneratorContext): List<String>
-  fun navDiCode(context: GeneratorContext): String
+  /** The name of the DI container the screen's graph file declares, and so of the file itself. */
+  fun containerName(context: GeneratorContext): String
+  fun graphImports(context: GeneratorContext): List<String>
+  fun graphCode(context: GeneratorContext): String
   fun registrarImports(context: GeneratorContext): List<String>
   fun registrarCode(context: GeneratorContext): String
 
   data object KotlinInjectAnvil : DiFrameworkConfig {
     override val injectImport: String = "me.tatarka.inject.annotations.Inject"
 
-    override fun navImports(context: GeneratorContext): List<String> = listOf(
+    override fun containerName(context: GeneratorContext): String = context.componentName
+
+    override fun graphImports(context: GeneratorContext): List<String> = listOf(
       "me.tatarka.inject.annotations.Inject",
       "me.tatarka.inject.annotations.Provides",
       "software.amazon.lastmile.kotlin.inject.anvil.ContributesSubcomponent",
       "software.amazon.lastmile.kotlin.inject.anvil.SingleIn",
     )
 
-    override fun navDiCode(context: GeneratorContext): String = """
+    override fun graphCode(context: GeneratorContext): String = """
     |@ContributesSubcomponent(ScreenScope::class)
     |@SingleIn(ScreenScope::class)
     |interface ${context.componentName} {
@@ -70,7 +74,9 @@ internal sealed interface DiFrameworkConfig {
   data object Metro : DiFrameworkConfig {
     override val injectImport: String = "dev.zacsweers.metro.Inject"
 
-    override fun navImports(context: GeneratorContext): List<String> = listOf(
+    override fun containerName(context: GeneratorContext): String = context.graphName
+
+    override fun graphImports(context: GeneratorContext): List<String> = listOf(
       "dev.zacsweers.metro.ContributesTo",
       "dev.zacsweers.metro.GraphExtension",
       "dev.zacsweers.metro.Inject",
@@ -78,7 +84,7 @@ internal sealed interface DiFrameworkConfig {
       "dev.zacsweers.metro.SingleIn",
     )
 
-    override fun navDiCode(context: GeneratorContext): String = """
+    override fun graphCode(context: GeneratorContext): String = """
     |@GraphExtension(ScreenScope::class)
     |interface ${context.graphName} {
     |  val navEntryProvider: ViceNavEntryProviderOf<${context.keyName}>

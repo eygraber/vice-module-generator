@@ -44,6 +44,7 @@ internal fun createScreensModule(
   val implModuleDir = File(moduleDir, "impl").apply { mkdirs() }
   val implMainDir = File(implModuleDir, "src" / context.mainSourceSetName)
   val implPackageDir = File(implMainDir, "kotlin" / packagePath).apply { mkdirs() }
+  val implDiPackageDir = File(implPackageDir, "di").apply { mkdirs() }
   val implTestDir = File(implModuleDir, "src" / context.testSourceSetName)
   val implTestPackageDir = File(implTestDir, "kotlin" / packagePath).apply { mkdirs() }
 
@@ -52,6 +53,7 @@ internal fun createScreensModule(
     publicPackageDir = publicPackageDir,
     implModuleDir = implModuleDir,
     implPackageDir = implPackageDir,
+    implDiPackageDir = implDiPackageDir,
     implTestPackageDir = implTestPackageDir,
     context = context,
   )

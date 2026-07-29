@@ -4,14 +4,15 @@ import com.eygraber.vice.module.generator.lib.internal.DiFrameworkConfig
 import com.eygraber.vice.module.generator.lib.internal.GeneratorContext
 import com.eygraber.vice.module.generator.lib.internal.sortedImports
 
-internal object NavGenerator : FileGenerator {
-  override fun fileName(context: GeneratorContext): String = "${context.navName}.kt"
+internal object GraphGenerator : FileGenerator {
+  override fun fileName(context: GeneratorContext): String =
+    "${DiFrameworkConfig.from(context.diFramework).containerName(context)}.kt"
 
   override fun generate(context: GeneratorContext): String {
     val diConfig = DiFrameworkConfig.from(context.diFramework)
 
     val effectsImports = if(context.shouldIncludeEffects) {
-      emptyList()
+      listOf("${context.featurePackage}.${context.effectsName}")
     }
     else {
       listOf("com.eygraber.vice.ViceEffects")
@@ -26,9 +27,15 @@ internal object NavGenerator : FileGenerator {
           "${context.projectPackage}.di.scopes.ScreenScope",
           "${context.projectPackage}.nav.entry.ViceNavEntryProviderOf",
           "${context.projectPackage}.nav.pop",
+          "${context.featurePackage}.${context.compositorName}",
+          "${context.featurePackage}.${context.intentName}",
+          "${context.featurePackage}.${context.keyName}",
+          "${context.featurePackage}.${context.navigatorName}",
+          "${context.featurePackage}.${context.viewName}",
+          "${context.featurePackage}.${context.viewStateName}",
           "com.eygraber.vice.nav3.ViceNavEntryProvider",
         ) +
-        diConfig.navImports(context),
+        diConfig.graphImports(context),
     )
 
     val navEntryProviderParams = if(context.shouldIncludeEffects) {
@@ -53,10 +60,10 @@ internal object NavGenerator : FileGenerator {
       """.trimMargin()
     }
 
-    val diCode = diConfig.navDiCode(context)
+    val diCode = diConfig.graphCode(context)
 
     return """
-    |package ${context.featurePackage}
+    |package ${context.diPackage}
     |
     |$imports
     |

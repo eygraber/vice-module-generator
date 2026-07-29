@@ -324,9 +324,10 @@ class EndToEndTest : TempDirTest() {
     assertTrue(File(publicSrcDir, "TestFeatureKey.kt").exists(), "Key file should exist")
 
     val implSrcDir = moduleDir.resolve("impl/src/main/kotlin/com/example/screens/test/feature")
-    assertTrue(File(implSrcDir, "TestFeatureNav.kt").exists(), "Nav file should exist")
+    val implDiDir = File(implSrcDir, "di")
+    assertTrue(File(implDiDir, "TestFeatureComponent.kt").exists(), "Component file should exist")
     assertTrue(
-      File(implSrcDir, "TestFeatureNavEntryRegistrar.kt").exists(),
+      File(implDiDir, "TestFeatureNavEntryRegistrar.kt").exists(),
       "Nav entry registrar file should exist",
     )
     assertTrue(File(implSrcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist")
@@ -344,9 +345,10 @@ class EndToEndTest : TempDirTest() {
     assertTrue(File(publicSrcDir, "TestFeatureKey.kt").exists(), "Key file should exist in commonMain")
 
     val implSrcDir = moduleDir.resolve("impl/src/commonMain/kotlin/com/example/screens/test/feature")
-    assertTrue(File(implSrcDir, "TestFeatureNav.kt").exists(), "Nav file should exist in commonMain")
+    val implDiDir = File(implSrcDir, "di")
+    assertTrue(File(implDiDir, "TestFeatureComponent.kt").exists(), "Component file should exist in commonMain")
     assertTrue(
-      File(implSrcDir, "TestFeatureNavEntryRegistrar.kt").exists(),
+      File(implDiDir, "TestFeatureNavEntryRegistrar.kt").exists(),
       "Nav entry registrar file should exist in commonMain",
     )
     assertTrue(File(implSrcDir, "TestFeatureNavigator.kt").exists(), "Navigator file should exist in commonMain")

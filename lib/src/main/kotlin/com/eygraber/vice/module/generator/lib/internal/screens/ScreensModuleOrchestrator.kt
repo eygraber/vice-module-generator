@@ -16,9 +16,12 @@ internal class ScreensModuleOrchestrator {
     BuildGradleGenerator,
   )
 
-  private val implSourceGenerators: List<FileGenerator> = listOf(
-    NavGenerator,
+  private val implDiSourceGenerators: List<FileGenerator> = listOf(
+    GraphGenerator,
     NavEntryRegistrarGenerator,
+  )
+
+  private val implSourceGenerators: List<FileGenerator> = listOf(
     NavigatorGenerator,
     CompositorGenerator,
     EffectsGenerator,
@@ -32,11 +35,13 @@ internal class ScreensModuleOrchestrator {
     ScreenshotTestGenerator,
   )
 
+  @Suppress("LongParameterList")
   fun createModule(
     publicModuleDir: File,
     publicPackageDir: File,
     implModuleDir: File,
     implPackageDir: File,
+    implDiPackageDir: File,
     implTestPackageDir: File,
     context: GeneratorContext,
   ) {
@@ -44,6 +49,7 @@ internal class ScreensModuleOrchestrator {
     generateInto(publicPackageDir, publicSourceGenerators, context)
     generateInto(implModuleDir, implModuleGenerators, context)
     generateInto(implPackageDir, implSourceGenerators, context)
+    generateInto(implDiPackageDir, implDiSourceGenerators, context)
     generateInto(implTestPackageDir, implTestSourceGenerators, context)
   }
 
