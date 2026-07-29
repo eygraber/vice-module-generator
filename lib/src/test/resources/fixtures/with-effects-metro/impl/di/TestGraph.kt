@@ -1,4 +1,4 @@
-package com.example.screens.test
+package com.example.screens.test.di
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -6,7 +6,13 @@ import com.example.di.scopes.NavScope
 import com.example.di.scopes.ScreenScope
 import com.example.nav.entry.ViceNavEntryProviderOf
 import com.example.nav.pop
-import com.eygraber.vice.ViceEffects
+import com.example.screens.test.TestCompositor
+import com.example.screens.test.TestEffects
+import com.example.screens.test.TestIntent
+import com.example.screens.test.TestKey
+import com.example.screens.test.TestNavigator
+import com.example.screens.test.TestView
+import com.example.screens.test.TestViewState
 import com.eygraber.vice.nav3.ViceNavEntryProvider
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.GraphExtension
@@ -18,9 +24,9 @@ import dev.zacsweers.metro.SingleIn
 @SingleIn(ScreenScope::class)
 internal class TestNavEntryProvider(
   override val compositor: TestCompositor,
+  override val effects: TestEffects,
 ) : ViceNavEntryProvider<Key, Intent, Compositor, Effects, ViewState>() {
   override val view: View = { state, onIntent -> TestView(state, onIntent) }
-  override val effects: ViceEffects = ViceEffects.None
 }
 
 @GraphExtension(ScreenScope::class)
@@ -50,7 +56,7 @@ private typealias Key = TestKey
 private typealias View = TestView
 private typealias Intent = TestIntent
 private typealias Compositor = TestCompositor
-private typealias Effects = ViceEffects
+private typealias Effects = TestEffects
 private typealias ViewState = TestViewState
 
 internal fun testNavigator(backStack: NavBackStack<NavKey>) = TestNavigator(

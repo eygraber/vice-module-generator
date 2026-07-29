@@ -11,14 +11,16 @@ and your project's conventions. Each screen is generated as a `public`/`impl` mo
 
 - `screens/<feature>/public` owns the screen's serializable nav key, so other screens can
   navigate to it without depending on its implementation
-- `screens/<feature>/impl` owns the VICE components (Compositor, ViewState, View, Intent),
-  the navigator, and a `NavEntryRegistrar` that contributes the screen's nav entry into the
-  nav DI scope via a multibinding — so the `:nav` module never needs to be edited for a new screen
+- `screens/<feature>/impl` owns the VICE components (Compositor, ViewState, View, Intent) and
+  the navigator, plus a `di` subpackage holding the screen's DI graph and a `NavEntryRegistrar`
+  that contributes the screen's nav entry into the nav DI scope via a multibinding — so the
+  `:nav` module never needs to be edited for a new screen
 
 It generates:
 
 - Navigation setup with type-safe routing
-- A nav entry registrar contributed to DI via multibinding
+- A DI graph and a nav entry registrar in the impl module's `di` package, the registrar
+  contributed to DI via multibinding
 - State management (Vice compositor pattern)
 - UI composables with previews
 - Test infrastructure

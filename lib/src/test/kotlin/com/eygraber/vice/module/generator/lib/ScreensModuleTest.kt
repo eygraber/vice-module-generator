@@ -15,6 +15,7 @@ class ScreensModuleTest : TempDirTest() {
     createModule()
 
     val implSrcDir = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/test")
+    val implDiDir = File(implSrcDir, "di")
 
     // Verify all expected files exist
     assertFileExists(tempDir.resolve("screens/test-feature/public/build.gradle.kts"), "public build.gradle.kts")
@@ -23,8 +24,8 @@ class ScreensModuleTest : TempDirTest() {
       "TestKey.kt",
     )
     assertFileExists(tempDir.resolve("screens/test-feature/impl/build.gradle.kts"), "impl build.gradle.kts")
-    assertFileExists(File(implSrcDir, "TestNav.kt"), "TestNav.kt")
-    assertFileExists(File(implSrcDir, "TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
+    assertFileExists(File(implDiDir, "TestComponent.kt"), "TestComponent.kt")
+    assertFileExists(File(implDiDir, "TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
     assertFileExists(File(implSrcDir, "TestNavigator.kt"), "TestNavigator.kt")
     assertFileExists(File(implSrcDir, "TestCompositor.kt"), "TestCompositor.kt")
     assertFileExists(File(implSrcDir, "TestIntent.kt"), "TestIntent.kt")
@@ -61,11 +62,11 @@ class ScreensModuleTest : TempDirTest() {
     assertContains(charSequence = keyContent, other = "data object TestKey : NavKey")
 
     // The key must not also be declared in the impl module
-    val navContent = tempDir
-      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/TestNav.kt")
+    val graphContent = tempDir
+      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/di/TestComponent.kt")
       .readText()
     assertFalse(
-      navContent.contains("data object TestKey"),
+      graphContent.contains("data object TestKey"),
       "The key should only be declared in the public module",
     )
   }
@@ -77,7 +78,7 @@ class ScreensModuleTest : TempDirTest() {
     createModule(diFramework = DiFramework.Metro)
 
     val registrarContent = tempDir
-      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/TestNavEntryRegistrar.kt")
+      .resolve("screens/test-feature/impl/src/main/kotlin/com/example/test/di/TestNavEntryRegistrar.kt")
       .readText()
 
     assertContains(charSequence = registrarContent, other = "@ContributesIntoSet(NavScope::class)")
@@ -102,9 +103,9 @@ class ScreensModuleTest : TempDirTest() {
     assertTrue(effectsContent.contains("class TestEffects"), "Effects file should contain TestEffects class")
     assertTrue(effectsContent.contains("ViceEffects"), "Effects should implement ViceEffects")
 
-    // Verify nav file references effects
-    val navContent = File(implSrcDir, "TestNav.kt").readText()
-    assertTrue(navContent.contains("override val effects: TestEffects"), "Nav should reference TestEffects")
+    // Verify the graph file references effects
+    val graphContent = File(implSrcDir, "di/TestComponent.kt").readText()
+    assertTrue(graphContent.contains("override val effects: TestEffects"), "Graph should reference TestEffects")
   }
 
   @Test
@@ -164,8 +165,11 @@ class ScreensModuleTest : TempDirTest() {
 
     val implSrcDir = moduleDir.resolve("impl/src/main/kotlin/com/example/test/feature")
     assertTrue(implSrcDir.exists(), "Impl source directory should exist")
-    assertTrue(implSrcDir.resolve("TestFeatureNav.kt").exists(), "Nav file should exist")
-    assertTrue(implSrcDir.resolve("TestFeatureNavEntryRegistrar.kt").exists(), "Registrar file should exist")
+    assertTrue(implSrcDir.resolve("di/TestFeatureComponent.kt").exists(), "Component file should exist")
+    assertTrue(
+      implSrcDir.resolve("di/TestFeatureNavEntryRegistrar.kt").exists(),
+      "Registrar file should exist",
+    )
     assertTrue(implSrcDir.resolve("TestFeatureNavigator.kt").exists(), "Navigator file should exist")
     assertTrue(implSrcDir.resolve("TestFeatureCompositor.kt").exists(), "Compositor file should exist")
     assertTrue(implSrcDir.resolve("TestFeatureIntent.kt").exists(), "Intent file should exist")
@@ -237,8 +241,8 @@ class ScreensModuleTest : TempDirTest() {
 
     // Verify all expected files exist in commonMain
     assertFileExists(File(publicSrcDir, "TestKey.kt"), "TestKey.kt")
-    assertFileExists(File(implSrcDir, "TestNav.kt"), "TestNav.kt")
-    assertFileExists(File(implSrcDir, "TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
+    assertFileExists(File(implSrcDir, "di/TestComponent.kt"), "TestComponent.kt")
+    assertFileExists(File(implSrcDir, "di/TestNavEntryRegistrar.kt"), "TestNavEntryRegistrar.kt")
     assertFileExists(File(implSrcDir, "TestNavigator.kt"), "TestNavigator.kt")
     assertFileExists(File(implSrcDir, "TestCompositor.kt"), "TestCompositor.kt")
     assertFileExists(File(implSrcDir, "TestIntent.kt"), "TestIntent.kt")
@@ -347,13 +351,15 @@ class ScreensModuleTest : TempDirTest() {
   }
 
   @Test
-  fun `Android nav file matches expected fixture`() {
+  fun `Android component file matches expected fixture`() {
     generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = getFixtureFile("fixtures/basic/impl/TestNav.kt"),
-      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
-      description = "Android TestNav.kt",
+      fixture = getFixtureFile("fixtures/basic/impl/di/TestComponent.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/di/TestComponent.kt",
+      ),
+      description = "Android TestComponent.kt",
     )
   }
 
@@ -362,9 +368,9 @@ class ScreensModuleTest : TempDirTest() {
     generateFixtureModule()
 
     assertFileContentMatches(
-      fixture = getFixtureFile("fixtures/basic/impl/TestNavEntryRegistrar.kt"),
+      fixture = getFixtureFile("fixtures/basic/impl/di/TestNavEntryRegistrar.kt"),
       generated = tempDir.resolve(
-        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNavEntryRegistrar.kt",
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/di/TestNavEntryRegistrar.kt",
       ),
       description = "Android TestNavEntryRegistrar.kt",
     )
@@ -420,13 +426,15 @@ class ScreensModuleTest : TempDirTest() {
   }
 
   @Test
-  fun `generates Metro Nav file with correct imports and annotations`() {
+  fun `generates Metro graph file with correct imports and annotations`() {
     generateFixtureModule(diFramework = DiFramework.Metro)
 
     assertFileContentMatches(
-      fixture = getFixtureFile("fixtures/basic-metro/impl/TestNav.kt"),
-      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
-      description = "Metro TestNav.kt",
+      fixture = getFixtureFile("fixtures/basic-metro/impl/di/TestGraph.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/di/TestGraph.kt",
+      ),
+      description = "Metro TestGraph.kt",
     )
   }
 
@@ -435,9 +443,9 @@ class ScreensModuleTest : TempDirTest() {
     generateFixtureModule(diFramework = DiFramework.Metro)
 
     assertFileContentMatches(
-      fixture = getFixtureFile("fixtures/basic-metro/impl/TestNavEntryRegistrar.kt"),
+      fixture = getFixtureFile("fixtures/basic-metro/impl/di/TestNavEntryRegistrar.kt"),
       generated = tempDir.resolve(
-        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNavEntryRegistrar.kt",
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/di/TestNavEntryRegistrar.kt",
       ),
       description = "Metro TestNavEntryRegistrar.kt",
     )
@@ -473,16 +481,18 @@ class ScreensModuleTest : TempDirTest() {
   }
 
   @Test
-  fun `generates Metro Nav file with effects`() {
+  fun `generates Metro graph file with effects`() {
     generateFixtureModule(
       diFramework = DiFramework.Metro,
       shouldIncludeEffects = true,
     )
 
     assertFileContentMatches(
-      fixture = getFixtureFile("fixtures/with-effects-metro/impl/TestNav.kt"),
-      generated = tempDir.resolve("screens/test-feature/impl/src/main/kotlin/com/example/screens/test/TestNav.kt"),
-      description = "Metro TestNav.kt with effects",
+      fixture = getFixtureFile("fixtures/with-effects-metro/impl/di/TestGraph.kt"),
+      generated = tempDir.resolve(
+        "screens/test-feature/impl/src/main/kotlin/com/example/screens/test/di/TestGraph.kt",
+      ),
+      description = "Metro TestGraph.kt with effects",
     )
   }
 

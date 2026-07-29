@@ -17,6 +17,7 @@ internal object NavEntryRegistrarGenerator : FileGenerator {
         "androidx.navigation3.runtime.NavKey",
         "${context.projectPackage}.di.scopes.NavScope",
         "${context.projectPackage}.nav.entry.ViceNavEntryRegistrar",
+        "${context.featurePackage}.${context.keyName}",
         "com.eygraber.vice.nav3.viceEntry",
       ) +
         diConfig.registrarImports(context),
@@ -25,7 +26,7 @@ internal object NavEntryRegistrarGenerator : FileGenerator {
     val registrarCode = diConfig.registrarCode(context)
 
     return """
-    |package ${context.featurePackage}
+    |package ${context.diPackage}
     |
     |$imports
     |

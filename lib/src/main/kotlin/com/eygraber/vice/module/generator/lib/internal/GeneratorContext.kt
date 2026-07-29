@@ -24,7 +24,6 @@ internal data class GeneratorContext(
   val keyName: String = "${featureName}Key"
   val navEntryProviderName: String = "${featureName}NavEntryProvider"
   val navEntryRegistrarName: String = "${featureName}NavEntryRegistrar"
-  val navName: String = "${featureName}Nav"
   val navigatorName: String = "${featureName}Navigator"
   val navigatorFactoryName: String = "${featureName.replaceFirstChar(Char::lowercase)}Navigator"
   val previewName: String = "${featureName}Preview"
@@ -34,6 +33,9 @@ internal data class GeneratorContext(
 
   // The impl module's Android namespace; the Kotlin package stays featurePackage
   val implNamespace: String = "$featurePackage.impl"
+
+  // The screen's DI wiring - its graph and nav entry registrar - lives in its own package
+  val diPackage: String = "$featurePackage.di"
 
   // Typesafe project accessor for the screen's public module, e.g. projects.screens.coolFeature.public
   val screenPublicProjectAccessor: String =
