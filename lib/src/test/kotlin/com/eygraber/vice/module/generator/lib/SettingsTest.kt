@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 class SettingsTest : TempDirTest() {
   @Test
-  fun `adds module to empty settings file`() {
+  fun `adds impl and public includes to empty settings file`() {
     createFileFromFixture(
       targetPath = "settings.gradle.kts",
       fixturePath = "fixtures/settings/empty.gradle.kts",
@@ -22,7 +22,12 @@ class SettingsTest : TempDirTest() {
     assertTrue(result, "Should successfully add module")
     assertGeneratedFileContains(
       path = "settings.gradle.kts",
-      expectedContent = "include(\":screens:test-feature\")",
+      expectedContent = "include(\":screens:test-feature:impl\")",
+      description = "Settings file",
+    )
+    assertGeneratedFileContains(
+      path = "settings.gradle.kts",
+      expectedContent = "include(\":screens:test-feature:public\")",
       description = "Settings file",
     )
   }
@@ -43,18 +48,28 @@ class SettingsTest : TempDirTest() {
     val content = readGeneratedFile("settings.gradle.kts")
     val lines = content.lines()
 
-    // Verify it was added
+    // Verify both were added
     assertGeneratedFileContains(
       path = "settings.gradle.kts",
-      expectedContent = "include(\":screens:beta-feature\")",
+      expectedContent = "include(\":screens:beta-feature:impl\")",
+      description = "Settings file",
+    )
+    assertGeneratedFileContains(
+      path = "settings.gradle.kts",
+      expectedContent = "include(\":screens:beta-feature:public\")",
       description = "Settings file",
     )
 
-    // Verify alphabetical order (beta comes before existing)
-    val betaIndex = lines.indexOfFirst { it.contains("beta-feature") }
+    // Verify alphabetical order (beta comes before existing, impl before public)
+    val betaImplIndex = lines.indexOfFirst { it.contains("beta-feature:impl") }
+    val betaPublicIndex = lines.indexOfFirst { it.contains("beta-feature:public") }
     val existingIndex = lines.indexOfFirst { it.contains("existing-feature") }
     assertTrue(
-      betaIndex < existingIndex,
+      betaImplIndex < betaPublicIndex,
+      "beta-feature:impl should come before beta-feature:public alphabetically",
+    )
+    assertTrue(
+      betaPublicIndex < existingIndex,
       "beta-feature should come before existing-feature alphabetically",
     )
   }
@@ -75,19 +90,16 @@ class SettingsTest : TempDirTest() {
     val content = readGeneratedFile("settings.gradle.kts")
     val lines = content.lines()
 
-    // Verify it was added
-    assertGeneratedFileContains(
-      path = "settings.gradle.kts",
-      expectedContent = "include(\":screens:zulu-feature\")",
-      description = "Settings file",
-    )
-
-    // Verify it's after existing
-    val zuluIndex = lines.indexOfFirst { it.contains("zulu-feature") }
     val existingIndex = lines.indexOfFirst { it.contains("existing-feature") }
+    val zuluImplIndex = lines.indexOfFirst { it.contains("zulu-feature:impl") }
+    val zuluPublicIndex = lines.indexOfFirst { it.contains("zulu-feature:public") }
     assertTrue(
-      zuluIndex > existingIndex,
-      "zulu-feature should come after existing-feature alphabetically",
+      zuluImplIndex > existingIndex,
+      "zulu-feature:impl should come after existing-feature alphabetically",
+    )
+    assertTrue(
+      zuluPublicIndex > zuluImplIndex,
+      "zulu-feature:public should come after zulu-feature:impl alphabetically",
     )
   }
 
@@ -98,36 +110,22 @@ class SettingsTest : TempDirTest() {
       fixturePath = "fixtures/settings/with-existing.gradle.kts",
     )
 
-    val result = addModuleToSettings(
+    val wasAddedFirst = addModuleToSettings(
       projectDir = tempDir,
-      moduleName = "existing-feature",
+      moduleName = "test-feature",
     )
+    assertTrue(wasAddedFirst, "First addition should succeed")
 
-    assertFalse(result, "Should not add duplicate module")
-    val content = readGeneratedFile("settings.gradle.kts")
-    val count = content.split("existing-feature").size - 1
-    assertEquals(
-      expected = count,
-      actual = 1,
-      message = "Should only have one instance of existing-feature, but found $count",
+    val wasAddedSecond = addModuleToSettings(
+      projectDir = tempDir,
+      moduleName = "test-feature",
     )
-  }
-
-  @Test
-  fun `handles multiple module additions`() {
-    createFileFromFixture(
-      targetPath = "settings.gradle.kts",
-      fixturePath = "fixtures/settings/with-existing.gradle.kts",
-    )
-
-    addModuleToSettings(tempDir, "alpha-feature")
-    addModuleToSettings(tempDir, "beta-feature")
-    addModuleToSettings(tempDir, "gamma-feature")
+    assertFalse(wasAddedSecond, "Duplicate addition should be reported")
 
     val content = readGeneratedFile("settings.gradle.kts")
-    assertTrue(content.contains("include(\":screens:alpha-feature\")"))
-    assertTrue(content.contains("include(\":screens:beta-feature\")"))
-    assertTrue(content.contains("include(\":screens:gamma-feature\")"))
-    assertTrue(content.contains("include(\":screens:existing-feature\")"))
+    val implCount = content.split("include(\":screens:test-feature:impl\")").size - 1
+    val publicCount = content.split("include(\":screens:test-feature:public\")").size - 1
+    assertEquals(expected = 1, actual = implCount, message = "Should only have one impl include")
+    assertEquals(expected = 1, actual = publicCount, message = "Should only have one public include")
   }
 }

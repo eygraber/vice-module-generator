@@ -8,8 +8,15 @@ internal fun addModuleToSettings(
 ): Boolean {
   val settingsFile = File(projectDir, "settings.gradle.kts")
 
-  return settingsFile.insert(
-    newLine = "include(\":screens:$moduleName\")",
+  val isImplIncluded = settingsFile.insert(
+    newLine = "include(\":screens:$moduleName:impl\")",
     intoAlphabetizedSectionWithPrefix = "include(",
   )
+
+  val isPublicIncluded = settingsFile.insert(
+    newLine = "include(\":screens:$moduleName:public\")",
+    intoAlphabetizedSectionWithPrefix = "include(",
+  )
+
+  return isImplIncluded && isPublicIncluded
 }

@@ -11,7 +11,7 @@ internal object ViewStateGenerator : FileGenerator {
   |import androidx.compose.runtime.Immutable
   |
   |@Immutable
-  |data object ${context.viewStateName}
+  |internal data object ${context.viewStateName}
   |
   """.trimMargin()
 }

@@ -3,22 +3,25 @@ package com.eygraber.vice.module.generator.lib.internal.screens
 import com.eygraber.vice.module.generator.lib.DiFramework
 import com.eygraber.vice.module.generator.lib.internal.GeneratorContext
 
+/**
+ * Generates the build file for the screen's impl module.
+ */
 internal object BuildGradleGenerator : FileGenerator {
   override fun fileName(context: GeneratorContext): String = "build.gradle.kts"
 
   override fun generate(context: GeneratorContext): String = when {
     context.isKmpProject -> when(context.diFramework) {
-      DiFramework.KotlinInjectAnvil -> buildKmpKotlinInjectAnvilGradle(context.featurePackage)
-      DiFramework.Metro -> buildKmpMetroGradle(context.featurePackage)
+      DiFramework.KotlinInjectAnvil -> buildKmpKotlinInjectAnvilGradle(context)
+      DiFramework.Metro -> buildKmpMetroGradle(context)
     }
 
     else -> when(context.diFramework) {
-      DiFramework.KotlinInjectAnvil -> buildAndroidKotlinInjectAnvilGradle(context.featurePackage)
-      DiFramework.Metro -> buildAndroidMetroGradle(context.featurePackage)
+      DiFramework.KotlinInjectAnvil -> buildAndroidKotlinInjectAnvilGradle(context)
+      DiFramework.Metro -> buildAndroidMetroGradle(context)
     }
   }
 
-  private fun buildAndroidKotlinInjectAnvilGradle(featurePackage: String) = """
+  private fun buildAndroidKotlinInjectAnvilGradle(context: GeneratorContext) = """
   |plugins {
   |  alias(libs.plugins.conventionsAndroidLibrary)
   |  alias(libs.plugins.conventionsCompose)
@@ -31,48 +34,45 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.paparazzi)
   |}
   |
+  |@Suppress("DEPRECATION")
   |android {
-  |  namespace = "$featurePackage"
+  |  namespace = "${context.implNamespace}"
   |}
   |
   |dependencies {
   |  api(projects.di)
+  |  api(projects.nav.public)
+  |  api(${context.screenPublicProjectAccessor})
+  |  api(libs.androidx.navigation3.runtime)
+  |  api(libs.compose.runtime)
+  |  api(libs.vice.core)
+  |  api(libs.vice.nav3)
   |
   |  implementation(projects.ui.compose)
   |  implementation(projects.ui.material)
-  |
-  |  api(libs.androidx.navigation3.runtime)
-  |
   |  implementation(libs.compose.foundation)
   |  implementation(libs.compose.foundationLayout)
   |  implementation(libs.compose.material3)
-  |  implementation(libs.compose.runtime)
   |  implementation(libs.compose.runtimeAnnotation)
   |  implementation(libs.compose.ui)
   |  implementation(libs.compose.ui.text)
   |  implementation(libs.compose.ui.tooling.preview)
-  |
   |  implementation(libs.kotlinInject.anvilRuntime)
   |  implementation(libs.kotlinInject.anvilRuntimeOptional)
   |  implementation(libs.kotlinInject.runtime)
-  |
   |  implementation(libs.kotlinx.coroutines.core)
-  |  implementation(libs.kotlinx.serialization.core)
-  |
-  |  implementation(libs.vice.core)
-  |  implementation(libs.vice.nav3)
-  |
-  |  testImplementation(projects.testUtils)
-  |  testImplementation(libs.bundles.test.paparazzi)
   |
   |  debugImplementation(libs.compose.ui.tooling)
+  |
+  |  testImplementation(${context.testUtilsProjectAccessor})
+  |  testImplementation(libs.bundles.test.paparazzi)
   |
   |  ksp(libs.kotlinInject.anvilCompiler)
   |}
   |
   """.trimMargin()
 
-  private fun buildAndroidMetroGradle(featurePackage: String) = """
+  private fun buildAndroidMetroGradle(context: GeneratorContext) = """
   |plugins {
   |  alias(libs.plugins.conventionsAndroidLibrary)
   |  alias(libs.plugins.conventionsCompose)
@@ -85,42 +85,40 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.paparazzi)
   |}
   |
+  |@Suppress("DEPRECATION")
   |android {
-  |  namespace = "$featurePackage"
+  |  namespace = "${context.implNamespace}"
   |}
   |
   |dependencies {
   |  api(projects.di)
+  |  api(projects.nav.public)
+  |  api(${context.screenPublicProjectAccessor})
+  |  api(libs.androidx.navigation3.runtime)
+  |  api(libs.compose.runtime)
+  |  api(libs.vice.core)
+  |  api(libs.vice.nav3)
   |
   |  implementation(projects.ui.compose)
   |  implementation(projects.ui.material)
-  |
-  |  api(libs.androidx.navigation3.runtime)
-  |
   |  implementation(libs.compose.foundation)
   |  implementation(libs.compose.foundationLayout)
   |  implementation(libs.compose.material3)
-  |  implementation(libs.compose.runtime)
   |  implementation(libs.compose.runtimeAnnotation)
   |  implementation(libs.compose.ui)
   |  implementation(libs.compose.ui.text)
   |  implementation(libs.compose.ui.tooling.preview)
-  |
   |  implementation(libs.kotlinx.coroutines.core)
-  |  implementation(libs.kotlinx.serialization.core)
-  |
-  |  implementation(libs.vice.core)
-  |  implementation(libs.vice.nav3)
-  |
-  |  testImplementation(projects.testUtils)
-  |  testImplementation(libs.bundles.test.paparazzi)
   |
   |  debugImplementation(libs.compose.ui.tooling)
+  |
+  |  testImplementation(${context.testUtilsProjectAccessor})
+  |  testImplementation(libs.bundles.test.paparazzi)
   |}
   |
   """.trimMargin()
 
-  private fun buildKmpKotlinInjectAnvilGradle(featurePackage: String) = """
+  private fun buildKmpKotlinInjectAnvilGradle(context: GeneratorContext) = """
   |import org.gradle.kotlin.dsl.dependencies
   |
   |plugins {
@@ -130,12 +128,11 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.conventionsKotlinMultiplatform)
   |  alias(libs.plugins.conventionsProjectCommon)
   |  alias(libs.plugins.dependencyAnalysis)
-  |  alias(libs.plugins.kotlinxSerialization)
   |  alias(libs.plugins.ksp)
   |  alias(libs.plugins.paparazzi)
   |}
   |
-  |val pkg = "$featurePackage"
+  |val pkg = "${context.implNamespace}"
   |
   |compose {
   |  resources {
@@ -164,12 +161,14 @@ internal object BuildGradleGenerator : FileGenerator {
   |  sourceSets {
   |    // https://youtrack.jetbrains.com/issue/KT-83321/
   |    named("androidHostTest").dependencies {
-  |      implementation(projects.testUtils)
+  |      implementation(${context.testUtilsProjectAccessor})
   |      implementation(libs.bundles.test.paparazzi)
   |    }
   |
   |    commonMain.dependencies {
   |      api(projects.di)
+  |      api(projects.nav.public)
+  |      api(${context.screenPublicProjectAccessor})
   |
   |      implementation(projects.ui.compose)
   |      implementation(projects.ui.material)
@@ -190,7 +189,6 @@ internal object BuildGradleGenerator : FileGenerator {
   |      implementation(libs.kotlinInject.runtime)
   |
   |      implementation(libs.kotlinx.coroutines.core)
-  |      implementation(libs.kotlinx.serialization.core)
   |
   |      implementation(libs.vice.core)
   |      implementation(libs.vice.nav3)
@@ -204,7 +202,7 @@ internal object BuildGradleGenerator : FileGenerator {
   |
   """.trimMargin()
 
-  private fun buildKmpMetroGradle(featurePackage: String) = """
+  private fun buildKmpMetroGradle(context: GeneratorContext) = """
   |import org.gradle.kotlin.dsl.dependencies
   |
   |plugins {
@@ -214,12 +212,11 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.conventionsKotlinMultiplatform)
   |  alias(libs.plugins.conventionsProjectCommon)
   |  alias(libs.plugins.dependencyAnalysis)
-  |  alias(libs.plugins.kotlinxSerialization)
   |  alias(libs.plugins.metro)
   |  alias(libs.plugins.paparazzi)
   |}
   |
-  |val pkg = "$featurePackage"
+  |val pkg = "${context.implNamespace}"
   |
   |compose {
   |  resources {
@@ -244,12 +241,14 @@ internal object BuildGradleGenerator : FileGenerator {
   |  sourceSets {
   |    // https://youtrack.jetbrains.com/issue/KT-83321/
   |    named("androidHostTest").dependencies {
-  |      implementation(projects.testUtils)
+  |      implementation(${context.testUtilsProjectAccessor})
   |      implementation(libs.bundles.test.paparazzi)
   |    }
   |
   |    commonMain.dependencies {
   |      api(projects.di)
+  |      api(projects.nav.public)
+  |      api(${context.screenPublicProjectAccessor})
   |
   |      implementation(projects.ui.compose)
   |      implementation(projects.ui.material)
@@ -266,7 +265,6 @@ internal object BuildGradleGenerator : FileGenerator {
   |      implementation(libs.compose.uiToolingPreview)
   |
   |      implementation(libs.kotlinx.coroutines.core)
-  |      implementation(libs.kotlinx.serialization.core)
   |
   |      implementation(libs.metro.runtime)
   |

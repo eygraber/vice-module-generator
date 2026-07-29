@@ -83,6 +83,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
     shouldGeneratePreviewParameterProvider = !options.containsKey("no-preview-provider"),
     isKmpProject = options.containsKey("kmp"),
     diFramework = diFramework,
+    testUtilsModulePath = options["test-utils-module"] ?: ":test-utils",
   )
 
   println("Generating module with configuration:")
@@ -97,6 +98,7 @@ internal fun runCli(args: Array<String>, projectDir: File = File(".")): Int {
   println("  Generate Preview Provider: ${config.shouldGeneratePreviewParameterProvider}")
   println("  KMP/CMP Project: ${config.isKmpProject}")
   println("  DI Framework: ${config.diFramework}")
+  println("  Test Utils Module: ${config.testUtilsModulePath}")
   println()
 
   // Validate configuration
@@ -185,6 +187,7 @@ private fun printUsage() {
       --no-preview-provider             Skip generating preview parameter provider
       --kmp                             Generate for Kotlin/Compose Multiplatform project
       --metro                           Use Metro DI instead of kotlin-inject-anvil
+      --test-utils-module=PATH          Gradle path of the project's test utilities module (default: :test-utils)
       --dry-run                         Dry run, no files will be generated
       --help, -h                        Show this help message
 
