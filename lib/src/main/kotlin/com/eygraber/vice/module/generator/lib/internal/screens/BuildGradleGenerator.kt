@@ -34,7 +34,6 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.paparazzi)
   |}
   |
-  |@Suppress("DEPRECATION")
   |android {
   |  namespace = "${context.implNamespace}"
   |}
@@ -85,7 +84,6 @@ internal object BuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.paparazzi)
   |}
   |
-  |@Suppress("DEPRECATION")
   |android {
   |  namespace = "${context.implNamespace}"
   |}

@@ -10,7 +10,6 @@ plugins {
   alias(libs.plugins.paparazzi)
 }
 
-@Suppress("DEPRECATION")
 android {
   namespace = "com.example.screens.test.impl"
 }
