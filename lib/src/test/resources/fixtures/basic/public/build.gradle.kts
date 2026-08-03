@@ -7,7 +7,6 @@ plugins {
   alias(libs.plugins.kotlinxSerialization)
 }
 
-@Suppress("DEPRECATION")
 android {
   namespace = "com.example.screens.test"
 }

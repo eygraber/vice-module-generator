@@ -23,7 +23,6 @@ internal object PublicBuildGradleGenerator : FileGenerator {
   |  alias(libs.plugins.kotlinxSerialization)
   |}
   |
-  |@Suppress("DEPRECATION")
   |android {
   |  namespace = "${context.featurePackage}"
   |}
