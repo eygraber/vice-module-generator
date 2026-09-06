@@ -90,6 +90,9 @@ fun main(args: Array<String>) {
 private fun Generator(viewModel: ModuleGeneratorViewModel) {
   val initialFocusRequester = remember { FocusRequester() }
 
+  // requestFocus needs to run after the focus target has been attached,
+  // which LaunchedEffect guarantees but a non suspending effect doesn't
+  @Suppress("UnnecessaryLaunchedEffect")
   LaunchedEffect(Unit) {
     initialFocusRequester.requestFocus()
   }
